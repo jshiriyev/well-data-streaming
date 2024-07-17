@@ -7,16 +7,42 @@ from scipy.stats import linregress
 
 import streamlit as st
 
-from streamlit_plotly_events import plotly_events
+def plot_measured(frame,figure=None):
 
-# OPTIMIZATION FUNCTION
+	if figure is None:
+		figure = go.Figure()
 
-def optimize(frame,myevent=None):
+	observed = go.Scatter(
+		x = frame["x"],
+		y = frame["y"],
+		mode = 'markers',
+		# marker = dict(opacity=opacity),
+		)
 
-	if myevent is not None:
-		frame = frame.iloc[myevent.selection['point_indices'],:]
+	figure.add_trace(observed)
 
-	print(frame)
+	return figure
+
+def plot_computed(frame,figure=None):
+
+	if figure is None:
+		figure = go.Figure()
+
+	forecast = go.Scatter(
+		x = frame['x'],
+		y = frame['y'],
+		mode = 'lines',
+		line = dict(color="red"),
+		)
+
+	figure.add_trace(forecast)
+
+	return figure
+
+def optimize(frame,indices=None):
+
+	if indices:
+		frame = frame.iloc[indices,:]
 
 	x,y = frame['x'],frame['y']
 
@@ -26,36 +52,18 @@ def optimize(frame,myevent=None):
 
 	return pd.DataFrame(dict(x=xfit,y=r.slope*xfit+r.intercept))
 
-# PRESENTING ORIGINAL DATA
+measured = pd.DataFrame(dict(x=[1,2,3,4,5,6],y=[1.1,1.9,3.1,4.75,5.05,6]))
 
-data = dict(x=[1,2,3,4,5,6],y=[1.1,1.9,3.1,4.75,5.05,6])
+if "events" in st.session_state:
+	indices = st.session_state.events.selection["point_indices"]
+else:
+	indices = None
 
-frame = pd.DataFrame(data)
+computed = optimize(measured,indices)
 
-fig = go.Figure()
+figure = go.Figure()
 
-observed = go.Scatter(
-	x = frame["x"],
-	y = frame["y"],
-	mode = 'markers',
-	# marker = dict(opacity=opacity),
-	)
+figure = plot_measured(measured,figure)
+figure = plot_computed(computed,figure)
 
-fig.add_trace(observed)
-
-# SELECTING DATA
-
-fit = optimize(frame)
-
-forecast = go.Scatter(
-	x = fit['x'],
-	y = fit['y'],
-	mode = 'lines',
-	line = dict(color="red"),
-	)
-
-fig.add_trace(forecast)
-
-st.plotly_chart(fig,key="myevent",on_select='rerun')
-
-st.write(st.session_state.myevent)
+st.plotly_chart(figure,on_select="rerun",key="events")
