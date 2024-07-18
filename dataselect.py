@@ -41,13 +41,16 @@ def plot_computed(frame,figure=None):
 
 def optimize(frame,indices=None):
 
-	if indices:
+	if indices is not None:
 		frame = frame.iloc[indices,:]
+
+	if frame.shape[0]<2:
+		return pd.DataFrame(dict(x=[],y=[]))
 
 	x,y = frame['x'],frame['y']
 
 	r = linregress(x,y)
-
+		
 	xfit = np.linspace(0.5,6.5)
 
 	return pd.DataFrame(dict(x=xfit,y=r.slope*xfit+r.intercept))

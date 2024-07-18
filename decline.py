@@ -261,7 +261,7 @@ with displayColumn:
 			showlegend = False,
 	        )
 
-		st.plotly_chart(figMajor,use_container_width=True)
+		st.plotly_chart(figMajor,on_select="rerun",key="events",use_container_width=True)
 
 		for ratename in viewlist:
 
