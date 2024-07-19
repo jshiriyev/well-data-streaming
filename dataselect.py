@@ -1,72 +1,93 @@
-import numpy as np
+import datetime
+
+# import numpy as np
 import pandas as pd
 
-import plotly.graph_objects as go
+# import plotly.graph_objects as go
 
-from scipy.stats import linregress
+# from scipy.stats import linregress
+
+import prodpy as pp
 
 import streamlit as st
 
-def plot_measured(frame,figure=None):
+# def plot_measured(frame,figure=None):
 
-	if figure is None:
-		figure = go.Figure()
+# 	if figure is None:
+# 		figure = go.Figure()
 
-	observed = go.Scatter(
-		x = frame["x"],
-		y = frame["y"],
-		mode = 'markers',
-		# marker = dict(opacity=opacity),
-		)
+# 	observed = go.Scatter(
+# 		x = frame["x"],
+# 		y = frame["y"],
+# 		mode = 'markers',
+# 		# marker = dict(opacity=opacity),
+# 		)
 
-	figure.add_trace(observed)
+# 	figure.add_trace(observed)
 
-	return figure
+# 	return figure
 
-def plot_computed(frame,figure=None):
+# def plot_computed(frame,figure=None):
 
-	if figure is None:
-		figure = go.Figure()
+# 	if figure is None:
+# 		figure = go.Figure()
 
-	forecast = go.Scatter(
-		x = frame['x'],
-		y = frame['y'],
-		mode = 'lines',
-		line = dict(color="red"),
-		)
+# 	forecast = go.Scatter(
+# 		x = frame['x'],
+# 		y = frame['y'],
+# 		mode = 'lines',
+# 		line = dict(color="red"),
+# 		)
 
-	figure.add_trace(forecast)
+# 	figure.add_trace(forecast)
 
-	return figure
+# 	return figure
 
-def optimize(frame,indices=None):
+# def optimize(frame,indices=None):
 
-	if indices is not None:
-		frame = frame.iloc[indices,:]
+# 	if indices is not None:
+# 		frame = frame.iloc[indices,:]
 
-	if frame.shape[0]<2:
-		return pd.DataFrame(dict(x=[],y=[]))
+# 	if frame.shape[0]<2:
+# 		return pd.DataFrame(dict(x=[],y=[]))
 
-	x,y = frame['x'],frame['y']
+# 	x,y = frame['x'],frame['y']
 
-	r = linregress(x,y)
+# 	r = linregress(x,y)
 		
-	xfit = np.linspace(0.5,6.5)
+# 	xfit = np.linspace(0.5,6.5)
 
-	return pd.DataFrame(dict(x=xfit,y=r.slope*xfit+r.intercept))
+# 	return pd.DataFrame(dict(x=xfit,y=r.slope*xfit+r.intercept))
 
-measured = pd.DataFrame(dict(x=[1,2,3,4,5,6],y=[1.1,1.9,3.1,4.75,5.05,6]))
+#################################################################
+
+dates = [
+	datetime.date(2024,1,1),
+	datetime.date(2024,2,1),
+	datetime.date(2024,3,1),
+	datetime.date(2024,4,1),
+	datetime.date(2024,5,1),
+	datetime.date(2024,6,1),
+	]
+
+rates = [1.1,1.9,3.1,4.75,5.05,6]
+
+frame = pd.DataFrame(dict(dates=dates,rates=rates))
+
+diamond = pp.decline.Diamond(datehead='dates',ratehead='rates')
 
 if "events" in st.session_state:
 	indices = st.session_state.events.selection["point_indices"]
 else:
 	indices = None
 
-computed = optimize(measured,indices)
+figure,model = diamond(frame)
 
-figure = go.Figure()
+# computed = optimize(frame,indices)
 
-figure = plot_measured(measured,figure)
-figure = plot_computed(computed,figure)
+# figure = go.Figure()
 
-st.plotly_chart(figure,on_select="rerun",key="events")
+# figure = plot_measured(frame,figure)
+# figure = plot_computed(computed,figure)
+
+# st.plotly_chart(figure,on_select="rerun",key="events")
