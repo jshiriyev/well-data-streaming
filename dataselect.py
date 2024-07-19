@@ -76,12 +76,13 @@ frame = pd.DataFrame(dict(dates=dates,rates=rates))
 
 diamond = pp.decline.Diamond(datehead='dates',ratehead='rates')
 
-if "events" in st.session_state:
-	indices = st.session_state.events.selection["point_indices"]
-else:
-	indices = None
+# if "events" in st.session_state:
+# 	indices = st.session_state.events.selection["point_indices"]
+# else:
+# 	indices = None
 
-figure,model = diamond(frame)
+figure,model = diamond(frame,
+	analysis = dict(fitlims=((datetime.date(2023,1,1),datetime.date(2025,1,1)),)))
 
 # computed = optimize(frame,indices)
 
