@@ -65,31 +65,31 @@ class Slot:
 
 @dataclass(frozen=True)
 class Status:
+    """It is a well status dictionary for a well."""
+    prospect      : "white"
 
-  prospect      : "white"
+    construction  : "gray"
+    drilling      : "purple"
+    completion    : "yellow"
+    installation  : "pink"
 
-  construction  : "gray"
-  drilling      : "purple"
-  completion    : "yellow"
-  installation  : "pink"
+    delay         : "white"
+    mobilization  : "black"
 
-  delay         : "white"
-  mobilization  : "black"
+    optimization  : "lightgreen"
+    remediation   : "lightgreen"
+    recompletion  : "lighgreen"
+    fishing       : "red"
+    sidetrack     : "darkblue"
 
-  optimization  : "lightgreen"
-  remediation   : "lightgreen"
-  recompletion  : "lighgreen"
-  fishing       : "red"
-  sidetrack     : "darkblue"
+    production    : "darkgreen"
+    injection     : "blue"
 
-  production    : "darkgreen"
-  injection     : "blue"
-
-  @staticmethod
-  def fields() -> list:
-    return [field.name for field in fields(Status)]
+    @staticmethod
+    def fields() -> list:
+        return [field.name for field in fields(Status)]
 
 @dataclass
 class Summary:
-    """"""
-    text
+    """It is an executive summary text for a well."""
+    text    : str

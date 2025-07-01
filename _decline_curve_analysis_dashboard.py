@@ -2,9 +2,6 @@ import datetime
 
 import sys
 
-sys.path.append(r'C:\Users\3876yl\Documents\prodpy')
-# sys.path.append(r'C:\Users\user\Documents\GitHub\prodpy')
-
 import pandas
 
 import plotly.graph_objects as go
@@ -12,7 +9,6 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from prodpy import timeview as tv
-
 from prodpy import decline as dc
 
 st.set_page_config(layout='wide',page_title='Decline Curve Analysis')

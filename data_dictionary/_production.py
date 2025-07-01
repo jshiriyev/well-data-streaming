@@ -3,7 +3,7 @@ from dataclasses import dataclass, fields
 import datetime
 
 @dataclass
-class Operation:
+class Production:
     """It is a Production  dictionary for a perf in a well."""
 
     date    : datetime.date = None
@@ -21,4 +21,4 @@ class Operation:
 
     @staticmethod
     def fields() -> list:
-        return [field.name for field in fields(Operation)]
+        return [field.name for field in fields(Production)]
