@@ -16,3 +16,5 @@
 - Promotes consistency and scalability in well data management.
 
 ---
+
+data_dictionary/img
