@@ -49,6 +49,17 @@ class Table():
 
         self._tiein = value
 
+    def get(self):
+        """
+        Return a subset of the DataFrame with selected columns renamed.
+        
+        This method selects only the columns that are defined in the 'tiein' mapping 
+        and renames them using the keys of the 'tiein' dictionary.
+        """
+        reverse = {v: k for k, v in self.tiein.items()}
+
+        return self.frame[reverse.keys()].rename(columns=reverse)
+
     def __repr__(self):
         """Returns a string representation of the object."""
         return f"{self.__class__.__name__}\n{repr(self.frame)}\n"
@@ -88,6 +99,14 @@ class Table():
         """Returns the list of column names that are categorical by nature."""
         return utils.heads(self.frame,exclude=('number','datetime64'))
 
+def topTable(frame:pd.DataFrame=None,tiein:dict=None):
+
+    from .items import Top
+
+    Table.fields = Top.fields()
+
+    return Table(frame,tiein)
+
 def rateTable(frame:pd.DataFrame=None,tiein:dict=None):
 
     from .items import Rates
@@ -116,10 +135,12 @@ if __name__ == "__main__":
         C=['5-6','7-8','9-10','11'],
         D=['XY','XZ','YZ','ZZ']))
 
-    base = Table(df,dict(a='A',b='B',c='C',d='D'))
+    base = Table(df,dict(a='A',b='B',c='C'))
 
     print(base[2].c)
     print(base[2:])
+
+    print(base.get())
 
     # print(type(df.A))
 

@@ -1,4 +1,4 @@
-from ._location import Survey, Zones
+from ._location import Survey, Tops
 from ._drilling import Drilling, Layout
 from ._completion import Perfs
 

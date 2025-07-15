@@ -69,7 +69,7 @@ class Perfs():
     @staticmethod
     def fields() -> list:
         """Returns the list of field names in the Perf dataclass."""
-        return [f.name for f in fields(Perf)]
+        return Perf.fields()
 
     def __getitem__(self,key):
         """Retrieves a 'Perf' object by index."""

@@ -2,7 +2,7 @@ from ._well import Well
 
 from ._general import Name, Slot, Status, Summary
 
-from ._location import Survey, Depth, Zones
+from ._location import Survey, Depth, Top, Tops
 from ._drilling import Target, Drilling, Pipe, Layout
 from ._completion import Perf, Interval, Perfs
 

@@ -62,57 +62,73 @@ class Depth():
     def __repr__(self):
         return f"Depth(MD={self.MD}, TVD={self.TVD})"
 
-class Zones():
+@dataclass
+class Top:
+
+    formation       : list[str]
+    depth           : np.ndarray
+    facecolor       : list[str] = None
+    text_visibility : np.ndarray = None
+
+    @staticmethod
+    def fields() -> list:
+        return [field.name for field in fields(Top)]
+
+class Tops():
     """A class to store and utilize formation tops across the geom."""
 
     def __init__(self,**kwargs):
         """Initializes the Zone with named top values."""
 
-        keys,tops = [],[]
+        formation,depth = [],[]
 
         for name,vals in kwargs.items():
-            keys.append(name)
-            tops.append(vals)
+            formation.append(name)
+            depth.append(vals)
 
-        sorted_pairs = sorted(zip(tops,keys))
+        sorted_pairs = sorted(zip(depth,formation))
 
         if sorted_pairs:
-            self._tops,self._keys = zip(*sorted_pairs)
+            self._depth,self._formation = zip(*sorted_pairs)
         else:
-            self._tops,self._keys = [],[]
+            self._depth,self._formation = [],[]
+
+    @staticmethod
+    def fields() -> list:
+        return Top.fields()
 
     @property
-    def keys(self):
-        """Getter for the formation keys."""
-        return self._keys
+    def formation(self):
+        """Getter for the formation names."""
+        return self._formation
 
     @property
-    def tops(self):
+    def depth(self):
         """Getter for the formation tops."""
-        return self._tops
+        return self._depth
 
     def index(self,key):
         """Returns the index of formation based on its name."""
-        return self.keys.index(key)
+        return self.formation.index(key)
 
     def __getitem__(self,key):
         """Returns the list of formation tops based on formation name."""
-        return self.tops[self.index(key)]
+        return self.depth[self.index(key)]
 
     def limit(self,key):
         """Returns the list of formation tops and bottoms based on formation name."""
         index = self.index(key)
 
-        lower = None if index==len(self._tops)-1 else self._tops[index+1]
+        lower = None if index==len(self._depth)-1 else self._depth[index+1]
 
-        return self._tops[index], lower
+        return self._depth[index], lower
 
 if __name__ == "__main__":
 
-    zones = Zones(A=1952,B=2775)
+    zones = Tops(A=1952,B=2775)
 
-    print(zones.tops)
-    print(zones.keys)
+    print(zones.depth)
+    print(zones.formation)
 
     print(zones.index("B"))
     print(zones.limit("B"))
