@@ -17,5 +17,5 @@
 
 ---
 
-<img src="data_dictionary/img/well_data.jpg">
+<img src="img/well_data.jpg">
 
