@@ -1,6 +1,7 @@
-from ._location import Survey, Tops
-from ._drilling import Drilling, Layout
-from ._completion import Perfs
+from .general import Name, Slot, Status, Summary
+from .location import Survey, Tops
+# from ._drilling import Drilling, 
+from .completion import Perfs, Layout
 
 class Well():
     """It is a well dictionary with all sub classes."""
@@ -13,17 +14,17 @@ class Well():
         slot        : dict = None,
         drill       : dict = None,
         survey      : dict = None,
-        zones       : dict = None,
+        tops        : dict = None,
         ):
 
         self.name   = name
         self.status = status
         self.slot   = slot
         
-        self.drill  = drill
-        self.layout = None
         self.survey = survey
-        self.zones  = zones
+        self.tops   = tops
+        # self.drill  = drill
+        self.layout = None
         self.perfs  = None
 
         self.las    = []
@@ -77,12 +78,12 @@ class Well():
         self._survey = Survey(**(value or {}))
 
     @property
-    def zones(self):
-        return self._zones
+    def tops(self):
+        return self._tops
 
-    @zones.setter
-    def zones(self,value:dict):
-        self._zones = Zones(**(value or {}))
+    @tops.setter
+    def tops(self,value:dict):
+        self._tops = Tops(**(value or {}))
 
     @property
     def perfs(self):

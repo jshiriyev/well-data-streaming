@@ -1,9 +1,8 @@
-from ._well import Well
-
-from ._general import Name, Slot, Status, Summary
-
-from ._location import Survey, Depth, Top, Tops
-from ._drilling import Target, Drilling, Pipe, Layout
-from ._completion import Perf, Interval, Perfs
+from .general import Name, Slot, Status, Summary
+from .location import Survey, Top, Tops
+# from .drilling import Target, Drilling
+from .completion import Interval, Perf, Perfs, Pipe, Layout
 
 from ._rates import Rates
+
+from ._well import Well

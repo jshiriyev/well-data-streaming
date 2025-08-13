@@ -102,9 +102,11 @@ class Name:
         template = "Well-{}" if template is None else template
 
         try:
-            return template.format(index)
-        except Error as e:
-            raise ValueError(f"Invalid template '{template}' for index '{index}'. Error: {e}")
+            return template.format(index) if "{}" in template else template.format(index=index)
+        except Exception as e:
+            raise ValueError(
+                f"Invalid template '{template}' for index '{index}'. Error: {e}"
+            ) from e
 
     @classmethod
     def from_components(cls, prefix: str = "Well-", index: Optional[int] = None,
@@ -142,59 +144,18 @@ class Name:
                                    d.get("suffix", ""),
                                    pad=None)
 
-@dataclass
-class Slot:
-    """It is a slot dictionary for a well."""
-    index   : int = None
-
-    plt     : str = None
-
-    xhead   : float = 0.0
-    yhead   : float = 0.0
-    datum   : float = 0.0
-
-@dataclass(frozen=True)
-class Status:
-    """It is a well status dictionary for a well."""
-    prospect      : "white"
-
-    construction  : "gray"
-    drilling      : "purple"
-    completion    : "yellow"
-    installation  : "pink"
-
-    delay         : "white"
-    mobilization  : "black"
-
-    optimization  : "lightgreen"
-    remediation   : "lightgreen"
-    recompletion  : "lighgreen"
-    fishing       : "red"
-    sidetrack     : "darkblue"
-
-    production    : "darkgreen"
-    injection     : "blue"
-
-    @staticmethod
-    def fields() -> list:
-        return [field.name for field in fields(Status)]
-
-@dataclass
-class Summary:
-    """It is an executive summary text for a well."""
-    text    : str
-
 if __name__ == "__main__":
 
-    w = Name("Gun-38")
+    # w = Name("Gun-38")
 
-    print(w)
-    print(w.canonical(sep='-'))
-    print(w.split())
-    print(w.extract(r'\d+'))
-    print(Name.apply(42))
-    print(Name.from_components("GUN-", 42))
-    print(w.with_index_padding(3))
-    print(w.matches(r'^GUN-\d+$'))
-    print(w.to_dict())
-    print(Name.from_dict({'prefix': 'GUN-', 'index':38}))
+    # print(w)
+    # print(w.canonical(sep='-'))
+    # print(w.split())
+    # print(w.extract(r'\d+'))
+    # print(Name.apply(42))
+    # print(Name.from_components("GUN-", 42))
+    # print(w.with_index_padding(3))
+    # print(w.matches(r'^GUN-\d+$'))
+    # print(w.to_dict())
+    # print(Name.from_dict({'prefix': 'GUN-', 'index':38}))
+    print(Name.apply(42, template="Well-{index:03d}"))
