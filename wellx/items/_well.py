@@ -1,4 +1,4 @@
-from .general import Name, Slot, Status, Summary
+from .general import Name, Status, Summary
 from .location import Survey, Tops
 # from ._drilling import Drilling, 
 from .completion import Perfs, Layout
@@ -11,7 +11,7 @@ class Well():
     def __init__(self,
         name        : str,
         status      : str = "active",
-        slot        : dict = None,
+        plt         : str = None,
         drill       : dict = None,
         survey      : dict = None,
         tops        : dict = None,
@@ -19,7 +19,7 @@ class Well():
 
         self.name   = name
         self.status = status
-        self.slot   = slot
+        self.plt   = plt
         
         self.survey = survey
         self.tops   = tops
@@ -46,12 +46,12 @@ class Well():
         self._status = value
 
     @property
-    def slot(self):
-        return self._slot
+    def plt(self):
+        return self._plt
 
-    @slot.setter
-    def slot(self,value:dict):
-        self._slot = Slot(**(value or {}))
+    @plt.setter
+    def plt(self,value:str):
+        self._plt = value
 
     @property
     def drill(self):

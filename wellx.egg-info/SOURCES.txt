@@ -1,11 +1,14 @@
 README.md
 setup.py
 tests/test_well_general_name.py
+tests/test_well_location_survey.py
+tests/test_well_location_tops.py
 wellx/__init__.py
-wellx/_decline_curve_analysis_dashboard.py
-wellx/_decline_curve_analysis_dataselect.py
-wellx/_integrated_data_review_dashboard.py
 wellx/_request.py
+wellx/decline_curve_analysis_dashboard.py
+wellx/decline_curve_analysis_dataselect.py
+wellx/integrated_well_data.py
+wellx/survey_data.py
 wellx.egg-info/PKG-INFO
 wellx.egg-info/SOURCES.txt
 wellx.egg-info/dependency_links.txt
@@ -29,5 +32,4 @@ wellx/items/general/_status.py
 wellx/items/general/_summary.py
 wellx/items/location/__init__.py
 wellx/items/location/_survey.py
-wellx/items/location/_top.py
 wellx/items/location/_tops.py

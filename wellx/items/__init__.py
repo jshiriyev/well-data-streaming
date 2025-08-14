@@ -1,5 +1,5 @@
-from .general import Name, Slot, Status, Summary
-from .location import Survey, Top, Tops
+from .general import Name, Status, Summary
+from .location import Survey, Tops
 # from .drilling import Target, Drilling
 from .completion import Interval, Perf, Perfs, Pipe, Layout
 
