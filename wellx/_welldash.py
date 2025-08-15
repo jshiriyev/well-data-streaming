@@ -87,80 +87,76 @@ class WellDash:
 		"""Render production analysis tab"""
 		st.header("📈 Production Analytics")
 		
-		# production_data = st.session_state.production_data
-		
 		# Key metrics
 		col1, col2, col3, col4 = st.columns(4)
 		
-		# latest_data = production_data.iloc[-1]
+		with col1:
+			st.metric(
+				"Oil Rate", 
+				f"{well.rates.orate.iloc[-1]:.1f} ton/gün",
+				delta=f"{well.rates.orate.iloc[-1] - well.rates.orate.iloc[-2]:.1f}"
+			)
 		
-		# with col1:
-		# 	st.metric(
-		# 		"Oil Rate", 
-		# 		f"{latest_data['oil_rate']:.1f} bbl/d",
-		# 		delta=f"{latest_data['oil_rate'] - production_data.iloc[-30]['oil_rate']:.1f}"
-		# 	)
+		with col2:
+			st.metric(
+				"Gas Rate", 
+				f"{well.rates.grate.iloc[-1]:.0f} km3/gün",
+				delta=f"{well.rates.grate.iloc[-1] - well.rates.grate.iloc[-2]:.0f}"
+			)
 		
-		# with col2:
-		# 	st.metric(
-		# 		"Gas Rate", 
-		# 		f"{latest_data['gas_rate']:.0f} Mcf/d",
-		# 		delta=f"{latest_data['gas_rate'] - production_data.iloc[-30]['gas_rate']:.0f}"
-		# 	)
+		with col3:
+			st.metric(
+				"Water Cut", 
+				f"{well.rates.wrate.iloc[-1]:.1f} m3/gün",
+				delta=f"{(well.rates.wrate.iloc[-1] - well.rates.wrate.iloc[-2]):.1f}"
+			)
 		
-		# with col3:
-		# 	st.metric(
-		# 		"Water Cut", 
-		# 		f"{latest_data['water_cut']*100:.1f}%",
-		# 		delta=f"{(latest_data['water_cut'] - production_data.iloc[-30]['water_cut'])*100:.1f}%"
-		# 	)
-		
-		# with col4:
-		# 	st.metric(
-		# 		"Pressure", 
-		# 		f"{latest_data['pressure']:.0f} psi",
-		# 		delta=f"{latest_data['pressure'] - production_data.iloc[-30]['pressure']:.0f}"
-		# 	)
+		with col4:
+			st.metric(
+				"Choke", 
+				f"{well.rates.choke.iloc[-1]:.0f} mm",
+				delta=f"{well.rates.choke.iloc[-1] - well.rates.choke.iloc[-2]:.0f}"
+			)
 		
 		# Production trends
 		col1, col2 = st.columns(2)
 		
-		# with col1:
-		# 	fig = make_subplots(
-		# 		rows=2, cols=1,
-		# 		subplot_titles=('Production Rates', 'Pressure & Temperature'),
-		# 		vertical_spacing=0.1
-		# 	)
+		with col1:
+			fig = make_subplots(
+				rows=2, cols=1,
+				subplot_titles=('Production Rates', 'Choke Size'),
+				vertical_spacing=0.1
+			)
 			
-		# 	# Production rates
-		# 	fig.add_trace(
-		# 		go.Scatter(x=production_data['date'], y=production_data['oil_rate'], 
-		# 				  name='Oil Rate', line=dict(color='green')), row=1, col=1
-		# 	)
-		# 	fig.add_trace(
-		# 		go.Scatter(x=production_data['date'], y=production_data['gas_rate']/10, 
-		# 				  name='Gas Rate (÷10)', line=dict(color='blue')), row=1, col=1
-		# 	)
-		# 	fig.add_trace(
-		# 		go.Scatter(x=production_data['date'], y=production_data['water_rate'], 
-		# 				  name='Water Rate', line=dict(color='red')), row=1, col=1
-		# 	)
+			# Production rates
+			fig.add_trace(
+				go.Scatter(x=well.rates.date, y=well.rates.orate, 
+						  name='Oil Rate', line=dict(color='green')), row=1, col=1
+			)
+			fig.add_trace(
+				go.Scatter(x=well.rates.date, y=well.rates.grate, 
+						  name='Gas Rate', line=dict(color='blue')), row=1, col=1
+			)
+			fig.add_trace(
+				go.Scatter(x=well.rates.date, y=well.rates.wrate, 
+						  name='Water Rate', line=dict(color='red')), row=1, col=1
+			)
 			
-		# 	# Pressure and temperature
-		# 	fig.add_trace(
-		# 		go.Scatter(x=production_data['date'], y=production_data['pressure'], 
-		# 				  name='Pressure', line=dict(color='purple')), row=2, col=1
-		# 	)
+			# Pressure and temperature
+			fig.add_trace(
+				go.Scatter(x=well.rates.date, y=well.rates.choke, 
+						  name='Pressure', line=dict(color='purple')), row=2, col=1
+			)
 			
-		# 	fig.update_layout(height=600, title_text="Production Trends")
-		# 	st.plotly_chart(fig, use_container_width=True)
+			fig.update_layout(height=600, title_text="Production Trends")
+			st.plotly_chart(fig, use_container_width=True)
 		
 		# with col2:
 		# 	# Decline curve analysis
 		# 	fig = px.scatter(
 		# 		production_data, 
 		# 		x='date', 
-		# 		y='oil_rate',
+		# 		y='orate',
 		# 		title='Oil Rate Decline Analysis',
 		# 		trendline='ols'
 		# 	)
@@ -171,9 +167,9 @@ class WellDash:
 		# 	fig = px.line(
 		# 		production_data, 
 		# 		x='date', 
-		# 		y='water_cut',
+		# 		y='wrate',
 		# 		title='Water Cut Trend',
-		# 		labels={'water_cut': 'Water Cut (fraction)'}
+		# 		labels={'wrate': 'Water Cut (fraction)'}
 		# 	)
 		# 	fig.update_layout(height=300)
 		# 	st.plotly_chart(fig, use_container_width=True)
@@ -324,10 +320,10 @@ class WellDash:
 	def run(well:Well):
 		"""Main application runner"""
 		# Render sidebar
-		analysis_period = self.render_sidebar(well)
+		analysis_period = WellDash.render_sidebar(well)
 		
 		# Render header
-		self.render_header(well)
+		WellDash.render_header(well)
 		
 		# Main tabs
 		tab1, tab2, tab3, tab4, tab5 = st.tabs([
@@ -339,16 +335,16 @@ class WellDash:
 		])
 		
 		with tab1:
-			self.render_construction(well)
+			WellDash.render_construction(well)
 			
 		with tab2:
-			self.render_production(well)
+			WellDash.render_production(well)
 			
 		with tab3:
-			self.render_intervention(well)
+			WellDash.render_intervention(well)
 		
 		with tab4:
-			self.render_reservoir(well)
+			WellDash.render_reservoir(well)
 			
 		with tab5:
-			self.render_fluid_analysis(well)
+			WellDash.render_fluid_analysis(well)

@@ -2,6 +2,8 @@ from dataclasses import dataclass, field, fields
 from typing import Optional, Literal, Dict, Any
 import datetime
 
+import pandas as pd
+
 @dataclass(slots=True, frozen=False)
 class Rates:
     """
@@ -18,8 +20,6 @@ class Rates:
     ----------
     date : datetime.date
         Calendar date of the measurement (required).
-    well : str
-        Well identifier (case-sensitive).
     days : Optional[int]
         Number of days contributing to the rate calculation (default 1).
     horizon : Optional[str]
@@ -41,32 +41,86 @@ class Rates:
 
     """
 
-    date: datetime.date
-    well: str
+    date: pd.Series
 
-    days: Optional[int] = 1
-    horizon: Optional[str] = None
+    days: Optional[pd.Series] = None
+
+    horizon: Optional[pd.Series] = None
+
     optype: Literal["production", "injection"] = "production"
 
-    orate: Optional[float] = None
-    wrate: Optional[float] = None
-    grate: Optional[float] = None
+    choke: Optional[pd.Series] = None
+    orate: Optional[pd.Series] = None
+    wrate: Optional[pd.Series] = None
+    grate: Optional[pd.Series] = None
 
     _metadata: Dict[str, Any] = field(default_factory=dict, repr=False)
 
-    def __post_init__(self):
-        if not isinstance(self.date, datetime.date):
-            raise TypeError("date must be a datetime.date instance.")
-        if not self.well or not isinstance(self.well, str):
-            raise ValueError("well must be a non-empty string.")
-        if self.days is not None and self.days <= 0:
-            raise ValueError("days must be positive if provided.")
-        if self.optype not in ("production", "injection"):
-            raise ValueError("optype must be 'production' or 'injection'.")
-        for name in ("orate", "wrate", "grate"):
-            val = getattr(self, name)
-            if val is not None and val < 0:
-                raise ValueError(f"{name} must be >= 0.")
+    # def __post_init__(self):
+    #     # Coerce to Series where needed
+    #     def as_series(x: Optional[pd.Series], name: str) -> Optional[pd.Series]:
+    #         if x is None:
+    #             return None
+    #         if not isinstance(x, pd.Series):
+    #             raise TypeError(f"{name} must be a pandas Series.")
+    #         if x.ndim != 1:
+    #             raise ValueError(f"{name} must be 1-D.")
+    #         return x
+
+    #     self.date = as_series(self.date, "date")
+    #     self.horizon = as_series(self.horizon, "horizon")
+    #     self.choke = as_series(self.choke, "choke")
+    #     self.orate = as_series(self.orate, "orate")
+    #     self.wrate = as_series(self.wrate, "wrate")
+    #     self.grate = as_series(self.grate, "grate")
+
+    #     # length alignment: all non-None series must match date length
+    #     n = len(self.date)
+    #     for name in ("horizon", "choke", "orate", "wrate", "grate"):
+    #         s = getattr(self, name)
+    #         if s is not None and len(s) != n:
+    #             raise ValueError(f"Length mismatch: {name} has length {len(s)} but date has length {n}.")
+
+    #     # validate date as integer-like (allow NaN)
+    #     if not pd.api.types.is_integer_dtype(self.date.dropna()):
+    #         # try a safe cast check: values must be whole numbers if float dtype
+    #         if pd.api.types.is_float_dtype(self.date):
+    #             frac = (self.date.dropna() % 1 != 0)
+    #             if frac.any():
+    #                 raise TypeError("date must be integers in YYYYMMDD (found non-integers).")
+    #         else:
+    #             raise TypeError("date must be dtype integer or integer-like floats (YYYYMMDD).")
+
+    #     # validate horizon is string dtype if present
+    #     if self.horizon is not None and not pd.api.types.is_string_dtype(self.horizon.dropna()):
+    #         # allow object with strings
+    #         if not (pd.api.types.is_object_dtype(self.horizon) and self.horizon.dropna().map(lambda v: isinstance(v, str)).all()):
+    #             raise TypeError("horizon must be a string Series (or object with strings).")
+
+    #     # validate numeric columns are float-like and non-negative
+    #     for name in ("choke", "orate", "wrate", "grate"):
+    #         s = getattr(self, name)
+    #         if s is None:
+    #             continue
+    #         if not (pd.api.types.is_float_dtype(s) or pd.api.types.is_integer_dtype(s)):
+    #             raise TypeError(f"{name} must be numeric (float or int) Series.")
+    #         if (s.dropna() < 0).any():
+    #             raise ValueError(f"{name} must be >= 0 where present.")
+
+    #     # scalars
+    #     if self.optype not in ("production", "injection"):
+    #         raise ValueError("optype must be 'production' or 'injection'.")
+    #     if self.days is not None and self.days <= 0:
+    #         raise ValueError("days must be positive if provided.")
+
+    #     # normalize date to Int64 (nullable integer) for consistent I/O
+    #     self.date = self.date.astype("Int64")
+
+    #     # optional: normalize numerics to float64
+    #     for name in ("choke", "orate", "wrate", "grate"):
+    #         s = getattr(self, name)
+    #         if s is not None and s.dtype.kind != "f":
+    #             setattr(self, name, s.astype(float))
 
     @staticmethod
     def fields() -> list:
@@ -83,7 +137,6 @@ class Rates:
         """Return a dictionary representation for DataFrame ingestion or JSON."""
         return {
             "date": self.date.isoformat(),
-            "well": self.well,
             "days": self.days,
             "horizon": self.horizon,
             "optype": self.optype,

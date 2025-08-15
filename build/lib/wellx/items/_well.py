@@ -7,6 +7,8 @@ from .general import Name, Status
 from .location import Survey, Tops
 from .completion import Perfs, Layout
 
+from ._rates import Rates
+
 @dataclass(frozen=True, slots=True)
 class Well:
     """
@@ -76,6 +78,7 @@ class Well:
     logs: Tuple[str, ...] = dataclassfield(default_factory=tuple)
 
     # ---- production surveillance data ----
+    rates: Optional[Rates] = None
     plts: Optional[str] = None                  # e.g., latest PLT run id/label
 
     # ---- metadata ----

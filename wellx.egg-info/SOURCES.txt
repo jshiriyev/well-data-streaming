@@ -7,13 +7,12 @@ tests/test_well_location_survey.py
 tests/test_well_location_tops.py
 tests/test_well_rates.py
 wellx/__init__.py
+wellx/_dcadash.py
+wellx/_dcadash_dataselect.py
 wellx/_request.py
 wellx/_welldash.py
+wellx/_welldash_v0.py
 wellx/_winjdash.py
-wellx/decline_curve_analysis_dashboard.py
-wellx/decline_curve_analysis_dataselect.py
-wellx/integrated_well_data.py
-wellx/survey_data.py
 wellx.egg-info/PKG-INFO
 wellx.egg-info/SOURCES.txt
 wellx.egg-info/dependency_links.txt
