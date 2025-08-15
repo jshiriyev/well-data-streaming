@@ -1,6 +1,4 @@
 # PERFORATION RECORDS
-from ._interval import Interval
-from ._perf import Perf
 from ._perfs import Perfs
 
 # COMPLETION / PRODUCTION EQUIPMENT LAYOUT

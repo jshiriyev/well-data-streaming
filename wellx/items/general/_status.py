@@ -186,7 +186,6 @@ class Status:
         new_meta.update(kwargs)
         return replace(self, meta=new_meta)
 
-
 # --- Example helper to construct from simple strings/datetimes ---
 def make_status(
     well: str,

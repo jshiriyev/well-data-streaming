@@ -8,6 +8,8 @@ tests/test_well_location_tops.py
 tests/test_well_rates.py
 wellx/__init__.py
 wellx/_request.py
+wellx/_welldash.py
+wellx/_winjdash.py
 wellx/decline_curve_analysis_dashboard.py
 wellx/decline_curve_analysis_dataselect.py
 wellx/integrated_well_data.py
@@ -22,9 +24,8 @@ wellx/items/_ops.py
 wellx/items/_rates.py
 wellx/items/_well.py
 wellx/items/completion/__init__.py
-wellx/items/completion/_interval.py
+wellx/items/completion/_intervs.py
 wellx/items/completion/_layout.py
-wellx/items/completion/_perf.py
 wellx/items/completion/_perfs.py
 wellx/items/completion/_pipe.py
 wellx/items/drilling/__init__.py
@@ -34,3 +35,10 @@ wellx/items/general/_status.py
 wellx/items/location/__init__.py
 wellx/items/location/_survey.py
 wellx/items/location/_tops.py
+wellx/pipelines/__init__.py
+wellx/pipelines/_database.py
+wellx/pipelines/_schedule.py
+wellx/pipelines/_stack.py
+wellx/pipelines/_table.py
+wellx/pipelines/_txtfile.py
+wellx/pipelines/_utils.py

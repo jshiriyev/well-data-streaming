@@ -21,11 +21,14 @@ st.set_page_config(
 )
 
 class WellDashboard:
+
     def __init__(self):
+
         self.initialize_session_state()
         
     def initialize_session_state(self):
         """Initialize session state variables"""
+
         if 'well_data' not in st.session_state:
             st.session_state.well_data = {
                 'well_name': 'Well-001',
@@ -553,7 +556,8 @@ class WellDashboard:
         with tab5:
             self.render_analysis_tab()
 
-# Run the application
 if __name__ == "__main__":
+
     dashboard = WellDashboard()
+    
     dashboard.run()

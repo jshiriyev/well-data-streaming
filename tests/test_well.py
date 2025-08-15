@@ -90,7 +90,7 @@ def test_with_survey_tops_perfs_and_summary_counts():
     assert sm["tvd_end"] == pytest.approx(900.0)
     assert sm["tops"] == 2
     assert sm["perfs"] == 2
-    assert sm["las_files"] == 0
+    assert sm["log_files"] == 0
 
 
 # ---------- Units metadata & LAS handling ----------
@@ -98,11 +98,10 @@ def test_with_units_merges_and_add_las_dedup_preserves_order():
     w = make_well_basic().with_units({"MD": "m"}).with_units({"TVD": "m", "oil": "bbl/d"})
     assert w.units == {"MD": "m", "TVD": "m", "oil": "bbl/d"}
 
-    w2 = w.add_las("a.las", "b.las", "a.las", "c.las")
-    assert w2.las == ("a.las", "b.las", "c.las")
+    w2 = w.add_log("a.las", "b.las", "a.las", "c.las")
+    assert w2.logs == ("a.las", "b.las", "c.las")
     # original unchanged
-    assert w.las == ()
-
+    assert w.logs == ()
 
 # ---------- Validation ----------
 def test_validate_passes_when_tops_within_survey_range():
@@ -124,7 +123,7 @@ def test_to_dict_shallow_includes_light_markers_and_status_dict_when_available()
     s = StatusStub("production", color_hex="#166534", d={"code": "production", "started_at": "2025-01-01T00:00:00+00:00", "ended_at": None})
     survey = SurveyStub(MD=[0, 10], TVD=[0, 9])
 
-    w = make_well_basic().with_status(s).with_survey(survey).add_las("x.las")
+    w = make_well_basic().with_status(s).with_survey(survey).add_log("x.las")
     out = w.to_dict(deep=False)
 
     # name and units present
@@ -138,14 +137,13 @@ def test_to_dict_shallow_includes_light_markers_and_status_dict_when_available()
     assert out["survey"] == "survey"   # marker
     assert out["tops"] is None
     assert out["perfs"] is None
-    assert out["las"] == ["x.las"]
+    assert out["logs"] == ["x.las"]
 
 def test_from_dict_minimal_builds_well_with_name_and_las_only():
-    data = {"name": "W-001", "las": ["a.las", "b.las"], "plt": "PLT-01"}
+    data = {"name": "W-001", "logs": ["a.las", "b.las"], "plt": "PLT-01"}
     w = Well.from_dict(data)
     assert w.name_text == "W-001"
-    assert w.plt == "PLT-01"
-    assert w.las == ("a.las", "b.las")
+    assert w.logs == ("a.las", "b.las")
     # no status/survey/tops attached
     assert w.current_status_code() is None
     assert w.survey is None and w.tops is None

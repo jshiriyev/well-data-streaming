@@ -1,10 +1,11 @@
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, replace
+from dataclasses import field as dataclassfield
+
 from typing import Optional, Tuple, Dict, Any
 
 from .general import Name, Status
 from .location import Survey, Tops
 from .completion import Perfs, Layout
-
 
 @dataclass(frozen=True, slots=True)
 class Well:
@@ -30,8 +31,6 @@ class Well:
         Well name wrapper (e.g., supports canonical formatting).
     status : Optional[Status]
         Current operational status **interval** (e.g., drilling, production). May be None.
-    plt : Optional[str]
-        Pointer/ID to most recent PLT dataset (or a human label).
     survey : Optional[Survey]
         Trajectory data container.
     tops : Optional[Tops]
@@ -40,8 +39,10 @@ class Well:
         Surface/subsurface equipment layout (if modeled).
     perfs : Optional[Perfs]
         Perforation dataset (intervals).
-    las : Tuple[str, ...]
+    logs : Tuple[str, ...]
         Paths/IDs of LAS (or other) evaluation files attached to the well.
+    plts : Optional[str]
+        Pointer/ID to most recent PLT dataset (or a human label).
     units : Dict[str, str]
         Lightweight units metadata (e.g., {"MD": "m", "TVD": "m", "oil": "bbl/d"}).
 
@@ -52,25 +53,33 @@ class Well:
     """
 
     # ---- core identity ----
-    name: Name
+    name     : Name
 
-    # ---- high-level state ----
-    status: Optional[Status] = None            # current interval (from your Status class)
-    plt: Optional[str] = None                  # e.g., latest PLT run id/label
+    operator : str = None
+    field    : str = None
+    county   : str = None
+    state    : str = None
+    country  : str = None
+    service  : str = None
 
-    # ---- location ----
+    status   : Optional[Status] = None            # current interval (from your Status class)
+
+    # ---- location data ----
     survey: Optional[Survey] = None
     tops: Optional[Tops] = None
 
-    # ---- completion ----
+    # ---- completion data ----
     layout: Optional[Layout] = None
     perfs: Optional[Perfs] = None
 
-    # ---- formation evaluation ----
-    las: Tuple[str, ...] = field(default_factory=tuple)
+    # ---- formation evaluation data ----
+    logs: Tuple[str, ...] = dataclassfield(default_factory=tuple)
+
+    # ---- production surveillance data ----
+    plts: Optional[str] = None                  # e.g., latest PLT run id/label
 
     # ---- metadata ----
-    units: Dict[str, str] = field(default_factory=dict)
+    units: Dict[str, str] = dataclassfield(default_factory=dict)
 
     # ------------------------------------------------------------------
     # Builder-style "updaters" (return **new** Well; do not mutate self)
@@ -105,16 +114,16 @@ class Well:
         merged = {**self.units, **(units or {})}
         return replace(self, units=merged)
 
-    def add_las(self, *paths: str) -> "Well":
+    def add_log(self, *paths: str) -> "Well":
         """
         Return a new Well with LAS (or other) file identifiers appended.
         Duplicate suppression is applied while preserving order.
         """
-        new = list(self.las)
+        new = list(self.logs)
         for p in paths:
             if p and p not in new:
                 new.append(p)
-        return replace(self, las=tuple(new))
+        return replace(self, logs=tuple(new))
 
     # ------------------------------------------------------------------
     # Convenience accessors / summaries
@@ -159,7 +168,7 @@ class Well:
             "tvd_end": tvd_end,
             "tops": tops_count,
             "perfs": perfs_count,
-            "las_files": len(self.las),
+            "log_files": len(self.logs),
         }
 
     # ------------------------------------------------------------------
@@ -191,12 +200,12 @@ class Well:
             "name": self.name_text,
             "units": dict(self.units),
             "status": self.status.to_dict() if (self.status and hasattr(self.status, "to_dict")) else self.current_status_code(),
-            "plt": self.plt,
             "survey": maybe(self.survey) if deep else ("survey" if self.survey else None),
             "tops": maybe(self.tops) if deep else ("tops" if self.tops else None),
             "layout": maybe(self.layout) if deep else ("layout" if self.layout else None),
             "perfs": maybe(self.perfs) if deep else ("perfs" if self.perfs else None),
-            "las": list(self.las),
+            "logs": list(self.logs),
+            "plts": self.plts,
         }
 
     @classmethod
@@ -217,13 +226,13 @@ class Well:
         return cls(
             name=name_obj,
             status=status_obj if isinstance(status_obj, Status) else None,
-            plt=data.get("plt"),
             survey=data.get("survey") if isinstance(data.get("survey"), Survey) else None,
             tops=data.get("tops") if isinstance(data.get("tops"), Tops) else None,
             layout=data.get("layout") if isinstance(data.get("layout"), Layout) else None,
             perfs=data.get("perfs") if isinstance(data.get("perfs"), Perfs) else None,
-            las=tuple(data.get("las", []) or []),
+            logs=tuple(data.get("logs", []) or []),
             units=dict(data.get("units", {}) or {}),
+            plts=data.get("plts"),
         )
 
     # ------------------------------------------------------------------
