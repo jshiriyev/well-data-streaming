@@ -2,6 +2,7 @@ import pandas
 
 class utils:
 	
+	@staticmethod
 	def heads(frame,*args,include:tuple[str]=None,exclude:tuple[str]=None)->list[str]:
 		"""
 		Returns the list of arguments that are in the DataFrame and after
@@ -29,6 +30,7 @@ class utils:
 
 		return list(set(head_list))
 
+	@staticmethod
 	def join(frame,*args,separator=None,**kwargs)->pandas.DataFrame:
 		"""
 		Joins the frame columns specified by the args and kwargs and
@@ -44,7 +46,7 @@ class utils:
 		The joined frame.
 
 		"""
-		heads = utils.heads(*args,**kwargs)
+		heads = utils.heads(frame,*args,**kwargs)
 
 		separator = " " if separator is None else separator
 
@@ -52,6 +54,7 @@ class utils:
 
 		return pandas.DataFrame({separator.join(heads):value})
 
+	@staticmethod
 	def filter(frame,column:str,*args)->pandas.DataFrame:
 		"""
 		Filters the non-empty input frame by checking the 
@@ -69,6 +72,7 @@ class utils:
 		"""
 		return frame[frame[column].isin(args)].reset_index(drop=True)
 
+	@staticmethod
 	def groupsum(frame,column:str,*args,separator=None):
 		"""
 		Groups the non-empty input frame based on column and
@@ -106,14 +110,14 @@ if __name__ == "__main__":
 
 	frame = pd.DataFrame(frame)
 
-	utils = FrameUtils()
+	utils = utils()
 
 	print(frame)
 
-	print(utils(frame).heads('name','age',exclude='number'))
+	print(utils.heads(frame,'name','age',exclude='number'))
 
-	print(utils(frame).join('name','age',separator="#"))
+	print(utils.join(frame,'name','age',separator="#"))
 
-	print(utils(frame).filter("name","john","georgina"))
+	print(utils.filter(frame,"name","john","georgina"))
 
-	print(utils(frame).groupsum("name","john","georgina"))
+	print(utils.groupsum(frame,"name","john","georgina"))

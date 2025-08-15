@@ -1,5 +1,5 @@
 from . import items
-from . import pipelines
+from . import pipes
 
 from .items import Well
 
