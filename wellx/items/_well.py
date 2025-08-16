@@ -54,6 +54,7 @@ class Well:
     -----
     - Prefer creating/attaching validated objects: e.g., `Well.with_survey(Survey(...))`.
     - Keep heavy analytics (curves, correlations) in the respective modules; `Well` is orchestration.
+    
     """
 
     # ---- core identity ----
