@@ -1,5 +1,5 @@
 # PERFORATION RECORDS
-from ._perfs import Interval, Perf, Perfs
+from ._perfs import PerfInterval, Perf, PerfTable
 
 # COMPLETION / PRODUCTION EQUIPMENT LAYOUT
 from ._pipe import Pipe

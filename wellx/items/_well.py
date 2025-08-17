@@ -7,9 +7,9 @@ from wellx.pipes import Table, utils
 
 from .general import Name, Status
 from .location import Survey, Tops
-from .completion import Perfs, Layout
+from .completion import PerfTable, Layout
 
-from ._rates import Rates
+from ._rates import RateTable
 
 @dataclass(frozen=True, slots=True)
 class Well:
@@ -26,7 +26,7 @@ class Well:
     Key ideas
     ---------
     - **Immutable-ish**: public "setters" are not mutating; they return a new Well via `dataclasses.replace`.
-    - **Typed sub-objects**: `Survey`, `Tops`, `Perfs`, `Layout`, `Status`.
+    - **Typed sub-objects**: `Survey`, `Tops`, `PerfTable`, `Layout`, `Status`.
     - **Validation light**: high-level checks in `.validate()`; detailed checks live in sub-classes.
 
     Attributes
@@ -41,7 +41,7 @@ class Well:
         Formation tops (MD-based).
     layout : Optional[Layout]
         Surface/subsurface equipment layout (if modeled).
-    perfs : Optional[Perfs]
+    perfs : Optional[PerfTable]
         Perforation dataset (intervals).
     logs : Tuple[str, ...]
         Paths/IDs of LAS (or other) evaluation files attached to the well.
@@ -75,13 +75,13 @@ class Well:
 
     # ---- completion data ----
     layout: Optional[Layout] = None
-    perfs: Optional[Perfs] = None
+    perfs: Optional[PerfTable] = None
 
     # ---- formation evaluation data ----
     logs: Tuple[str, ...] = dataclassfield(default_factory=tuple)
 
     # ---- production surveillance data ----
-    rates: Optional[Rates] = None
+    rates: Optional[RateTable] = None
     plts: Optional[str] = None                  # e.g., latest PLT run id/label
 
     # ---- metadata ----
@@ -111,8 +111,8 @@ class Well:
         """Return a new Well with a (new) Layout."""
         return replace(self, layout=layout)
 
-    def with_perfs(self, perfs: Optional[Perfs]) -> "Well":
-        """Return a new Well with a (new) Perfs collection."""
+    def with_perfs(self, perfs: Optional[PerfTable]) -> "Well":
+        """Return a new Well with a (new) PerfTable collection."""
         return replace(self, perfs=perfs)
 
     def with_units(self, units: Dict[str, str]) -> "Well":
@@ -196,7 +196,7 @@ class Well:
                 return {"stations": int(obj.MD.size) if getattr(obj, "MD", None) is not None else 0}
             if isinstance(obj, Tops):
                 return {"formations": obj.formations}
-            if isinstance(obj, Perfs):
+            if isinstance(obj, PerfTable):
                 return {"count": len(getattr(obj, "intervals", []))}
             if isinstance(obj, Layout):
                 return {"type": "layout"}
@@ -235,7 +235,7 @@ class Well:
             survey=data.get("survey") if isinstance(data.get("survey"), Survey) else None,
             tops=data.get("tops") if isinstance(data.get("tops"), Tops) else None,
             layout=data.get("layout") if isinstance(data.get("layout"), Layout) else None,
-            perfs=data.get("perfs") if isinstance(data.get("perfs"), Perfs) else None,
+            perfs=data.get("perfs") if isinstance(data.get("perfs"), PerfTable) else None,
             logs=tuple(data.get("logs", []) or []),
             units=dict(data.get("units", {}) or {}),
             plts=data.get("plts"),

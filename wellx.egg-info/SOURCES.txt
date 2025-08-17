@@ -1,13 +1,14 @@
 README.md
 setup.py
-tests/test_items_completion_perfs_interval.py
 tests/test_items_completion_perfs_perf.py
+tests/test_items_completion_perfs_perfinterval.py
+tests/test_items_completion_perfs_perftable.py
 tests/test_items_general_name.py
 tests/test_items_general_status.py
 tests/test_items_location_survey.py
 tests/test_items_location_tops.py
 tests/test_items_rates_rate.py
-tests/test_items_rates_rates.py
+tests/test_items_rates_ratetable.py
 tests/test_items_well.py
 tests/test_pipes_table.py
 tests/test_pipes_utils.py

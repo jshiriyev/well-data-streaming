@@ -1,8 +1,8 @@
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field, fields as dcfields, is_dataclass
 
 import datetime
 
-from typing import Optional, Literal, Dict, Any
+from typing import Iterable, Mapping, Optional, Literal, Dict, Any, List, Union, Sequence
 
 import pandas as pd
 
@@ -15,7 +15,7 @@ class Rate:
 
     Domain assumptions
     ------------------
-    - Rates are *surface-standard* and non-negative.
+    - Rate is *surface-standard* and non-negative.
     - `otype` indicates flow direction: "production" (outflow) or "injection" (inflow).
     - `days` is the number of contributing days in the period (≥ 0). Use 0 to mark shut-in.
 
@@ -129,7 +129,7 @@ class Rate:
         """Return the unit for a field, checking overrides first."""
         if key in self._unit_override:
             return self._unit_override[key]
-        for f in fields(self):                 # dataclasses.fields -> tuple[Field, ...]
+        for f in dcfields(self):                 # dataclasses.fields -> tuple[Field, ...]
             if f.name == key:
                 return f.metadata.get("unit")  # metadata is a Mapping
         raise AttributeError(f"No field named {key!r}")
@@ -137,7 +137,7 @@ class Rate:
     def set_unit(self, **kwargs) -> None:
         """Override the unit for a field at runtime (does not change class metadata)."""
         for key, unit in kwargs.items():
-            if key not in {f.name for f in fields(self)}:
+            if key not in {f.name for f in dcfields(self)}:
                 raise AttributeError(f"No field named {key!r}")
             self._unit_override[key] = unit
 
@@ -155,156 +155,161 @@ class Rate:
     @staticmethod
     def fields() -> list[str]:
         """List of dataclass field names (stable order)."""
-        return [f.name for f in fields(Rate) if (f.init)]
+        return [f.name for f in dcfields(Rate) if f.init]
 
-class Rates(Table):
+RateLike = Union["Rate", Mapping[str, Any]]
+
+RateUnit = {f.name: unit for f in dcfields(Rate) if (unit := f.metadata.get("unit"))}
+
+class RateTable(Table):
     """
-    Time-stamped production or injection rates for wells.
+    Table of well rates with schema taken from Rate dataclass.
 
-    Geologic/engineering context
-    ----------------------------
-    - Each record captures the daily average rates for oil, water, and gas at a specific date.
-    - `otype` defines whether this is a **production** (outflow) or **injection** (inflow) record.
-    - All rates are **surface-standard** unless otherwise documented in metadata.
-    - Negative rates are not allowed (use zero for shut-in periods).
-
-    Parameters
-    ----------
-    date : datetime.date
-        Calendar date of the measurement (required).
-    days : Optional[int]
-        Number of days contributing to the rate calculation (default 1).
-    horizon : Optional[str]
-        Horizon or completion name (optional).
-    otype : Literal["production", "injection"]
-        Operation type; default is "production".
-    orate : Optional[float]
-        Oil rate in standard barrels/day (STB/day).
-    wrate : Optional[float]
-        Water rate in STB/day.
-    grate : Optional[float]
-        Gas rate in standard cubic feet/day (SCF/day).
-
-    Notes
-    -----
-    - Missing rates are treated as `None` (no measurement).
-    - Use `total_liquid()` and `to_dict()` for convenience.
-    - Can be extended later to include unit metadata and uncertainty.
-
+    - Keys of `tiein` are exactly the Rate.fields() names (date, well, orate, ...).
+    - Values of `tiein` point to actual column names in the frame (default: identity).
+    - Uses Rate(**row) to coerce/validate rows when requested.
     """
 
-    date: pd.Series
+    # Optional default unit scales: column_name -> multiplicative factor
+    # Example: {"orate": 1/6.2898}  # STB/d -> m3/d
+    DEFAULT_UNITS: Dict[str, float] = RateUnit
 
-    days: Optional[pd.Series] = None
+    # -------- core construction --------
+    def __init__(
+        self,
+        data: Optional[Iterable[RateLike] | pd.DataFrame] = None,
+        *,
+        tiein: Optional[Dict[str, str]] = None,
+        coerce: bool = True,
+        copy: bool = False,
+        **kwargs: Any,
+    ):
 
-    horizon: Optional[pd.Series] = None
+        # Build tiein: keys must be Rate fields
+        if tiein is None:
+            tiein = {k: k for k in Rate.fields()}
+        else:
+            # ensure we at least have identity for unspecified fields
+            tiein = {**{k: k for k in Rate.fields()}, **tiein}
 
-    otype: Literal["production", "injection"] = "production"
+        if isinstance(data, pd.DataFrame):
+            # align/rename dataframe columns according to tiein values
+            df = data.copy() if copy else data
+        else:
+            rows = []
+            if data is not None:
+                for item in data:
+                    rows.append(self._row_to_dict(item, validate=validate, coerce=coerce))
+            df = pd.DataFrame(rows, columns=Rate.fields()).copy() if copy else pd.DataFrame(rows, columns=Rate.fields())
 
-    choke: Optional[pd.Series] = None
-    orate: Optional[pd.Series] = None
-    wrate: Optional[pd.Series] = None
-    grate: Optional[pd.Series] = None
+        # Guarantee a dict so Table.__getattr__ doesn't trip on None
+        kwargs["tiein"] = dict(tiein)
 
-    _metadata: Dict[str, Any] = field(default_factory=dict, repr=False)
+        super().__init__(df, **kwargs)
 
-    # def __post_init__(self):
-    #     # Coerce to Series where needed
-    #     def as_series(x: Optional[pd.Series], name: str) -> Optional[pd.Series]:
-    #         if x is None:
-    #             return None
-    #         if not isinstance(x, pd.Series):
-    #             raise TypeError(f"{name} must be a pandas Series.")
-    #         if x.ndim != 1:
-    #             raise ValueError(f"{name} must be 1-D.")
-    #         return x
+    # Keep subclass through pandas ops
+    @property
+    def _constructor(self):
+        def _c(*args, **kwargs):
+            out = RateTable(*args, **kwargs)
+            # Ensure tiein survives pandas operations
+            current = getattr(self, "_tiein", None) or {}
+            object.__setattr__(out, "_tiein", dict(current))
+            return out
+        return _c
 
-    #     self.date = as_series(self.date, "date")
-    #     self.horizon = as_series(self.horizon, "horizon")
-    #     self.choke = as_series(self.choke, "choke")
-    #     self.orate = as_series(self.orate, "orate")
-    #     self.wrate = as_series(self.wrate, "wrate")
-    #     self.grate = as_series(self.grate, "grate")
+    def _row_to_dict(self, item: RateLike, *, validate: bool, coerce: bool) -> Dict[str, Any]:
 
-    #     # length alignment: all non-None series must match date length
-    #     n = len(self.date)
-    #     for name in ("horizon", "choke", "orate", "wrate", "grate"):
-    #         s = getattr(self, name)
-    #         if s is not None and len(s) != n:
-    #             raise ValueError(f"Length mismatch: {name} has length {len(s)} but date has length {n}.")
+        if is_dataclass(item) and isinstance(item, Rate):
+            row = {f.name: getattr(item, f.name) for f in dcfields(Rate) if f.init}
+        elif isinstance(item, Mapping):
+            row = dict(item)
+        else:
+            raise TypeError(f"Unsupported row type: {type(item)!r}. Expected Rate or Mapping.")
 
-    #     # validate date as integer-like (allow NaN)
-    #     if not pd.api.types.is_integer_dtype(self.date.dropna()):
-    #         # try a safe cast check: values must be whole numbers if float dtype
-    #         if pd.api.types.is_float_dtype(self.date):
-    #             frac = (self.date.dropna() % 1 != 0)
-    #             if frac.any():
-    #                 raise TypeError("date must be integers in YYYYMMDD (found non-integers).")
-    #         else:
-    #             raise TypeError("date must be dtype integer or integer-like floats (YYYYMMDD).")
+        # Drop extras; add missing as None
+        cleaned = {k: row.get(k, None) for k in Rate.fields()}
 
-    #     # validate horizon is string dtype if present
-    #     if self.horizon is not None and not pd.api.types.is_string_dtype(self.horizon.dropna()):
-    #         # allow object with strings
-    #         if not (pd.api.types.is_object_dtype(self.horizon) and self.horizon.dropna().map(lambda v: isinstance(v, str)).all()):
-    #             raise TypeError("horizon must be a string Series (or object with strings).")
+        if validate:
+            if coerce:
+                # (1) enforce required types/rules using Rate; (2) normalize out values
+                coerced = Rate(**cleaned)
+                cleaned = {f.name: getattr(coerced, f.name) for f in dcfields(Rate) if f.init}
+            else:
+                self._basic_row_checks(cleaned)
 
-    #     # validate numeric columns are float-like and non-negative
-    #     for name in ("choke", "orate", "wrate", "grate"):
-    #         s = getattr(self, name)
-    #         if s is None:
-    #             continue
-    #         if not (pd.api.types.is_float_dtype(s) or pd.api.types.is_integer_dtype(s)):
-    #             raise TypeError(f"{name} must be numeric (float or int) Series.")
-    #         if (s.dropna() < 0).any():
-    #             raise ValueError(f"{name} must be >= 0 where present.")
+        return cleaned
 
-    #     # scalars
-    #     if self.otype not in ("production", "injection"):
-    #         raise ValueError("otype must be 'production' or 'injection'.")
-    #     if self.days is not None and self.days <= 0:
-    #         raise ValueError("days must be positive if provided.")
+    def _basic_row_checks(self, row: Mapping[str, Any]) -> None:
+        # mirror Rate.__post_init__ invariants lightly (no coercion)
+        must = ("well", "date", "otype", "orate", "wrate", "grate")
+        for k in must:
+            if k not in row:
+                raise ValueError(f"Missing required field: {k}")
 
-    #     # normalize date to Int64 (nullable integer) for consistent I/O
-    #     self.date = self.date.astype("Int64")
+        if not isinstance(row["date"], datetime.date):
+            raise TypeError("date must be a datetime.date")
+        if not isinstance(row["well"], str) or not row["well"].strip():
+            raise ValueError("well must be a non-empty string")
+        if row["otype"] not in ("production", "injection"):
+            raise ValueError("otype must be 'production' or 'injection'")
 
-    #     # optional: normalize numerics to float64
-    #     for name in ("choke", "orate", "wrate", "grate"):
-    #         s = getattr(self, name)
-    #         if s is not None and s.dtype.kind != "f":
-    #             setattr(self, name, s.astype(float))
+        for k in ("orate", "wrate", "grate"):
+            v = row.get(k)
+            if v is not None and float(v) < 0.0:
+                raise ValueError(f"{k} must be >= 0")
+
+        if row.get("days") is not None and row["days"] < 0:
+            raise ValueError("days must be >= 0")
+        if row.get("choke") is not None and row["choke"] < 0:
+            raise ValueError("choke must be >= 0")
+
+    # -------- alt constructors / round-trips --------
+    @classmethod
+    def from_dataframe(
+        cls,
+        df: pd.DataFrame,
+        *,
+        tiein: Optional[Dict[str, str]] = None,
+        unit_scales: Optional[Dict[str, float]] = None,
+        validate: bool = True,
+        coerce: bool = True,
+        **kwargs: Any,
+    ) -> "RateTable":
+        return cls(df, tiein=tiein, unit_scales=unit_scales, validate=validate, coerce=coerce, **kwargs)
+
+    @classmethod
+    def from_rates(cls, rates: Iterable["Rate"], **kwargs: Any) -> "RateTable":
+        return cls(rates, **kwargs)
+
+    def to_rates(self) -> List["Rate"]:
+        out: List["Rate"] = []
+        for _, row in self.iterrows():
+            payload = {k: row[k] for k in Rate.fields()}
+            out.append(Rate(**payload))
+        return out
+
+    def append_rate(self, rate: "Rate") -> "RateTable":
+        row = self._row_to_dict(rate, validate=True, coerce=False)
+        new_df = pd.concat([pd.DataFrame(self), pd.DataFrame([row])], ignore_index=True)
+        # preserve current tiein
+        tie = getattr(self, "_tiein", {}) or {}
+        return RateTable.from_dataframe(new_df, tiein=dict(tie), validate=True)
+
+    # -------- units --------
+    def convert_units(self, unit_scales: Dict[str, float]) -> "RateTable":
+        """
+        Return a new RateTable with column-wise multiplicative scales applied.
+        Only affects numeric columns present in 'unit_scales'.
+        """
+        df = pd.DataFrame(self).copy()
+        for col, s in (unit_scales or {}).items():
+            if col in df.columns and s not in (None, 1):
+                df[col] = df[col].astype(float) * float(s)
+
+        tie = getattr(self, "_tiein", {}) or {}
+        return RateTable.from_dataframe(df, tiein=dict(tie), validate=False)
 
     @staticmethod
-    def fields() -> list:
-        """Field names for I/O schemas."""
+    def fields() -> list[str]:
         return Rate.fields()
-
-    def total_liquid(self) -> Optional[float]:
-        """Return oil + water rate, or None if both missing."""
-        if self.orate is None and self.wrate is None:
-            return None
-        return (self.orate or 0) + (self.wrate or 0)
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Return a dictionary representation for DataFrame ingestion or JSON."""
-        return {
-            "date": self.date.isoformat(),
-            "days": self.days,
-            "horizon": self.horizon,
-            "otype": self.otype,
-            "orate": self.orate,
-            "wrate": self.wrate,
-            "grate": self.grate,
-            **self._metadata
-        }
-
-    def set_metadata(self, **kwargs) -> None:
-        """
-        Attach arbitrary metadata (e.g., measurement method, source).
-        Keys overwrite existing metadata.
-        """
-        self._metadata.update(kwargs)
-
-    def get_metadata(self, key: str, default=None):
-        """Retrieve a metadata value by key."""
-        return self._metadata.get(key, default)

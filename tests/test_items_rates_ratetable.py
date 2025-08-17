@@ -4,7 +4,7 @@ import datetime as dt
 import pytest
 
 # Adjust this import to your actual module filename
-from wellx.items import Rates
+from wellx.items import RateTable
 
 
 # ---------- Helpers ----------
@@ -14,6 +14,6 @@ def d(y, m, day):
 
 # ---------- Schema ----------
 def test_fields_schema():
-    assert Rates.fields() == [
+    assert RateTable.fields() == [
         "well", "date", "days", "horizon", "otype", "choke", "orate", "wrate", "grate"
     ]
