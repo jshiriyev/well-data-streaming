@@ -1,2 +1,0 @@
-class WInjDash:
-	pass
