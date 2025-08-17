@@ -15,5 +15,5 @@ def d(y, m, day):
 # ---------- Schema ----------
 def test_fields_schema():
     assert Rates.fields() == [
-        "date", "days", "horizon", "optype", "choke", "orate", "wrate", "grate"
+        "well", "date", "days", "horizon", "otype", "choke", "orate", "wrate", "grate"
     ]
