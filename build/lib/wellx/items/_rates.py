@@ -1,11 +1,35 @@
 from dataclasses import dataclass, field, fields
-from typing import Optional, Literal, Dict, Any
+
 import datetime
+
+from typing import Optional, Literal, Dict, Any
 
 import pandas as pd
 
+from wellx.pipes import Table
+
 @dataclass(slots=True, frozen=False)
-class Rates:
+class Rate:
+    date: datetime.date
+
+    days: int = None
+
+    horizon: str = None
+
+    optype: Literal["production", "injection"] = "production"
+
+    choke: float = None
+    orate: float = None
+    wrate: float = None
+    grate: float = None
+
+    @staticmethod
+    def fields() -> list:
+        """Returns the list of field names in the Perf dataclass."""
+        return [f.name for f in fields(Rate)]
+
+@dataclass(slots=True, frozen=False)
+class Rates(Table):
     """
     Time-stamped production or injection rates for a single well or perforation.
 

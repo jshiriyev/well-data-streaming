@@ -1,5 +1,7 @@
 README.md
 setup.py
+tests/test_pipes_table.py
+tests/test_pipes_utils.py
 tests/test_well.py
 tests/test_well_general_name.py
 tests/test_well_general_status.py
@@ -34,10 +36,10 @@ wellx/items/general/_status.py
 wellx/items/location/__init__.py
 wellx/items/location/_survey.py
 wellx/items/location/_tops.py
-wellx/pipelines/__init__.py
-wellx/pipelines/_database.py
-wellx/pipelines/_schedule.py
-wellx/pipelines/_stack.py
-wellx/pipelines/_table.py
-wellx/pipelines/_txtfile.py
-wellx/pipelines/_utils.py
+wellx/pipes/__init__.py
+wellx/pipes/_database.py
+wellx/pipes/_schedule.py
+wellx/pipes/_stack.py
+wellx/pipes/_table.py
+wellx/pipes/_txtfile.py
+wellx/pipes/_utils.py

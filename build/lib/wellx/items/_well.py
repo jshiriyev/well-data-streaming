@@ -3,6 +3,8 @@ from dataclasses import field as dataclassfield
 
 from typing import Optional, Tuple, Dict, Any
 
+from wellx.pipes import Table, utils
+
 from .general import Name, Status
 from .location import Survey, Tops
 from .completion import Perfs, Layout
@@ -52,6 +54,7 @@ class Well:
     -----
     - Prefer creating/attaching validated objects: e.g., `Well.with_survey(Survey(...))`.
     - Keep heavy analytics (curves, correlations) in the respective modules; `Well` is orchestration.
+    
     """
 
     # ---- core identity ----
