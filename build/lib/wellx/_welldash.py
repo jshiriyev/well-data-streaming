@@ -19,6 +19,8 @@ from reportlab.lib import colors
 
 import streamlit as st
 
+import prodpy
+
 from .items import Well
 
 class WellDash:
@@ -118,37 +120,15 @@ class WellDash:
 				delta=f"{well.rates.choke.iloc[-1] - well.rates.choke.iloc[-2]:.0f}"
 			)
 		
-		# Production trends
-		col1, col2 = st.columns(2)
+		# # Production trends
+		col1,col2 = st.columns(2)
 		
 		with col1:
-			fig = make_subplots(
-				rows=2, cols=1,
-				subplot_titles=('Production Rates', 'Choke Size'),
-				vertical_spacing=0.1
-			)
-			
-			# Production rates
-			fig.add_trace(
-				go.Scatter(x=well.rates.date, y=well.rates.orate, 
-						  name='Oil Rate', line=dict(color='green')), row=1, col=1
-			)
-			fig.add_trace(
-				go.Scatter(x=well.rates.date, y=well.rates.grate, 
-						  name='Gas Rate', line=dict(color='blue')), row=1, col=1
-			)
-			fig.add_trace(
-				go.Scatter(x=well.rates.date, y=well.rates.wrate, 
-						  name='Water Rate', line=dict(color='red')), row=1, col=1
-			)
-			
-			# Pressure and temperature
-			fig.add_trace(
-				go.Scatter(x=well.rates.date, y=well.rates.choke, 
-						  name='Pressure', line=dict(color='purple')), row=2, col=1
-			)
-			
-			fig.update_layout(height=600, title_text="Production Trends")
+			fig = prodpy.stream.plot2(well.rates)
+			st.plotly_chart(fig, use_container_width=True)
+
+		with col2:
+			fig = prodpy.stream.plot3(well.tops,well.perfs)
 			st.plotly_chart(fig, use_container_width=True)
 		
 		# with col2:
@@ -177,15 +157,13 @@ class WellDash:
 	@staticmethod
 	def render_intervention(well:Well):
 		"""Render intervention analysis tab"""
-		st.header("🔧 Intervention Analysis")
-		
-		# intervention_data = st.session_state.intervention_data
+		st.header("🔧 Intervention Record")
 		
 		col1, col2 = st.columns(2)
 		
-		# with col1:
-		# 	st.subheader("Intervention History")
-		# 	st.dataframe(intervention_data, use_container_width=True)
+		with col1:
+			st.subheader("Intervention History")
+			st.dataframe(well.perfs, use_container_width=True)
 			
 		# 	# Total costs
 		# 	total_cost = intervention_data['cost'].sum()
@@ -215,66 +193,75 @@ class WellDash:
 	@staticmethod
 	def render_reservoir(well:Well):
 		"""Render reservoir analysis tab"""
-		st.header("🗻 Reservoir Analysis")
-		
-		# formation_data = st.session_state.formation_data
+		formation_data = well.reservoir
+
+		st.header("🗻 Reservoir Properties")
 		
 		col1, col2 = st.columns(2)
 		
-		# with col1:
-		# 	st.subheader("Formation Properties")
-		# 	st.dataframe(formation_data, use_container_width=True)
+		with col1:
+			st.subheader("Formation Properties")
+			st.dataframe(formation_data, use_container_width=True)
 			
-		# 	# Porosity vs Permeability
-		# 	fig = px.scatter(
-		# 		formation_data, 
-		# 		x='porosity', 
-		# 		y='permeability',
-		# 		size='net_pay',
-		# 		color='formation',
-		# 		title='Porosity vs Permeability',
-		# 		labels={'porosity': 'Porosity (%)', 'permeability': 'Permeability (mD)'}
-		# 	)
-		# 	st.plotly_chart(fig, use_container_width=True)
+			# Porosity vs Permeability
+			fig = px.scatter(
+				formation_data, 
+				x='phie', y='perme',
+				size='netflag',
+				size_max=80,
+				color='formation',
+				title='Porosity vs Permeability',
+				labels={'phie': 'Porosity (-)', 'perme': 'Permeability (mD)'},
+				color_discrete_sequence=px.colors.qualitative.Set2
+			)
+
+			st.plotly_chart(fig, use_container_width=True)
 		
-		# with col2:
-		# 	# Formation tops visualization
-		# 	fig = go.Figure()
+		with col2:
+			# Formation tops visualization
+			fig = go.Figure()
+
+			palette = px.colors.qualitative.Set2
+			formations = formation_data["formation"].unique()
+			color_map = {f: palette[i % len(palette)] for i, f in enumerate(formations)}
+
+			for _, row in formation_data.iterrows():
+				fig.add_trace(go.Bar(
+					x=[row['formation']],
+					y=[row['netflag']],
+					name=row['formation'],
+					marker_color=color_map[row["formation"]],   # <-- custom color
+					textposition='auto'
+				))
+
+			fig.update_layout(
+				title='Net Pay by Formation',
+				xaxis_title='Formation',
+				yaxis_title='Net Pay (m)',
+				showlegend=False
+			)
+			st.plotly_chart(fig, use_container_width=True)
 			
-		# 	for _, row in formation_data.iterrows():
-		# 		fig.add_trace(go.Bar(
-		# 			x=[row['formation']],
-		# 			y=[row['net_pay']],
-		# 			name=row['formation'],
-		# 			text=f"{row['depth']} ft",
-		# 			textposition='auto'
-		# 		))
+			# Reservoir quality index
+			formation_data['rqi'] = formation_data['perme'] * formation_data['phie'] / 100
 			
-		# 	fig.update_layout(
-		# 		title='Net Pay by Formation',
-		# 		xaxis_title='Formation',
-		# 		yaxis_title='Net Pay (ft)',
-		# 		showlegend=False
-		# 	)
-		# 	st.plotly_chart(fig, use_container_width=True)
-			
-		# 	# Reservoir quality index
-		# 	formation_data['rqi'] = formation_data['permeability'] * formation_data['porosity'] / 100
-			
-		# 	fig = px.bar(
-		# 		formation_data, 
-		# 		x='formation', 
-		# 		y='rqi',
-		# 		title='Reservoir Quality Index',
-		# 		color='rqi',
-		# 		color_continuous_scale='viridis'
-		# 	)
-		# 	st.plotly_chart(fig, use_container_width=True)
+			fig = px.bar(
+				formation_data, 
+				x='formation', 
+				y='rqi',
+				title='Reservoir Quality Index',
+				color='rqi',
+				color_continuous_scale='viridis'
+			)
+
+			fig.update_layout(yaxis_title='RQI',coloraxis_showscale=False)
+
+			st.plotly_chart(fig, use_container_width=True)
 	
 	@staticmethod
 	def render_fluid_analysis(well:Well):
 		"""Render advanced analysis tab"""
-		st.header("🧪 Advanced Analysis")
+		st.header("🧪 Fluid Analysis")
 		
 		col1, col2 = st.columns(2)
 		

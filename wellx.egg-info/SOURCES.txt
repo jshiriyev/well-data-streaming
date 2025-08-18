@@ -40,6 +40,7 @@ wellx/items/general/_status.py
 wellx/items/location/__init__.py
 wellx/items/location/_survey.py
 wellx/items/location/_tops.py
+wellx/items/reservoir/__init__.py
 wellx/pipes/__init__.py
 wellx/pipes/_database.py
 wellx/pipes/_schedule.py

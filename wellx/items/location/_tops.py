@@ -49,13 +49,14 @@ class Tops:
     - Returns are plain Python/numpy types; no pandas dependency.
 
     """
+    well:      Iterable[str]
     formation: Iterable[str]
     depth:     Iterable[float]
     facecolor: Optional[Dict[str, str]] = None
 
     # Declare internal storage so slots know about them:
     _formation: List[str] = field(init=False, repr=False)
-    _depth: np.ndarray     = field(init=False, repr=False)
+    _depth: np.ndarray = field(init=False, repr=False)
     _facecolor: Dict[str, str] = field(init=False, repr=False, default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -87,7 +88,7 @@ class Tops:
     @staticmethod
     def fields() -> list:
         """Field names for I/O schemas."""
-        return ["formation", "depth", "facecolor"]
+        return ["well", "formation", "depth", "facecolor"]
 
     @property
     def formations(self) -> List[str]:

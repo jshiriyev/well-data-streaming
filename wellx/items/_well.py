@@ -67,6 +67,8 @@ class Well:
     country  : str = None
     service  : str = None
 
+    platform : str = None
+
     status   : Optional[Status] = None            # current interval (from your Status class)
 
     # ---- location data ----
@@ -79,6 +81,7 @@ class Well:
 
     # ---- formation evaluation data ----
     logs: Tuple[str, ...] = dataclassfield(default_factory=tuple)
+    reservoir: str = None
 
     # ---- production surveillance data ----
     rates: Optional[RateTable] = None

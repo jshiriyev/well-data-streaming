@@ -135,7 +135,7 @@ class Perf:
     What this represents
     --------------------
     A single perforated interval (in **measured depth, MD**) with optional
-    metadata such as horizon and gun type.
+    metadata such as formation and gun type.
 
     Domain assumptions
     ------------------
@@ -155,7 +155,7 @@ class Perf:
         Base of the perforation interval (MD). If omitted, equals `top`.
     date : datetime.date, optional
         Perforation date (or record date).
-    horizon : str, optional
+    formation : str, optional
         Zone/formation label.
     guntype : str, optional
         Perforation gun/type descriptor. A small vocabulary is provided in `GUN_TYPES`
@@ -174,7 +174,7 @@ class Perf:
     base: float = field(default=None, metadata={"unit": "m"})
 
     date: Optional[datetime.date] = None
-    horizon: Optional[str] = None
+    formation: Optional[str] = None
     guntype: Optional[str] = None
 
     _unit_override: Dict[str, str] = field(default_factory=dict, init=False, repr=False)
@@ -228,7 +228,7 @@ class Perf:
             "top": self.top,
             "base": self.base,
             "date": self.date.isoformat() if self.date else None,
-            "horizon": self.horizon,
+            "formation": self.formation,
             "guntype": self.guntype,
         }
         return out

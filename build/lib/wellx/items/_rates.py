@@ -27,7 +27,7 @@ class Rate:
         Calendar date of record (required).
     days : int, optional
         Contributing days in the period. Defaults to 0.
-    horizon : str, optional
+    formation : str, optional
         Horizon/completion name.
     otype : {"production", "injection"}, default "production"
         Operational type of the record.
@@ -86,9 +86,11 @@ class Rate:
 
     days: Optional[int] = 0
 
-    horizon: Optional[str] = None
+    formation: Optional[str] = None
 
     otype: Literal["production", "injection"] = "production"
+
+    mode: Optional[str] = None # production or injection method such as fountain, gas-lift, etc.
 
     choke: Optional[float] = None
 
