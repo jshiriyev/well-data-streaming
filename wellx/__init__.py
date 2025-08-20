@@ -3,5 +3,5 @@ from . import pipes
 
 from .items import Well
 
-from ._welldash import WellDash
-from ._winjdash import WInjDash
+from ._welldash import WellStream
+from ._winjdash import WinjStream

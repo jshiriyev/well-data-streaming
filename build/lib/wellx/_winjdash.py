@@ -1,2 +1,2 @@
-class WInjDash:
+class WinjStream:
 	pass

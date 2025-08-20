@@ -2,6 +2,8 @@ from dataclasses import dataclass, field, fields
 
 import numpy as np
 
+import pandas as pd
+
 _EPS = 1e-12
 
 @dataclass(slots=True)
@@ -80,6 +82,22 @@ class Survey:
         vals = np.asanyarray(values)
         self._check_in_range(vals, self.TVD, "TVD")
         return np.interp(vals,self.TVD,self.MD)
+
+    @staticmethod
+    def get_unit_normal(survey:pd.DataFrame,md:float):
+
+        index = np.abs(md-survey['MD']).argmin()
+
+        if survey['MD'].iloc[index]>md:
+            ilow,iupp = index-1,index
+        else:
+            ilow,iupp = index,index+1
+
+        dx = survey['X'].iloc[iupp]-survey['X'].iloc[ilow]
+        dy = survey['Y'].iloc[iupp]-survey['Y'].iloc[ilow]
+        dz = survey['TVD'].iloc[iupp]-survey['TVD'].iloc[ilow]
+
+        return np.array([dx,dy,dz])/np.linalg.norm(np.array([dx,dy,dz]))
 
     @staticmethod
     def inc2tvd(INC:np.ndarray,MD:np.ndarray):

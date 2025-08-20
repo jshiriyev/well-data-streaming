@@ -60,6 +60,7 @@ class Tops:
     _facecolor: Dict[str, str] = field(init=False, repr=False, default_factory=dict)
 
     def __post_init__(self) -> None:
+        
         names = list(self.formation)
         depths = np.asarray(list(self.depth), dtype=float)
 
@@ -79,6 +80,7 @@ class Tops:
 
         # sort shallow → deep by MD; keep names aligned
         order = np.argsort(depths, kind="mergesort")
+
         self._depth = depths[order]
         self._formation = [names[i] for i in order]
 

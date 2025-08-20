@@ -25,31 +25,25 @@ from .items import Well
 
 from .items._profile import well_3D_profile, well_schematic
 
-class WellDash:
+class WellStream:
 	
 	@staticmethod
 	def render_sidebar(well:Well):
 		"""Render sidebar with well information and controls"""
-		st.sidebar.header("🛢️ Well Information")
 
-		st.sidebar.info(f"""
-			**Well Name:** {well.name}  
-			**Field:** {well.field}  
-			**Operator:** {well.operator}  
-			**Country:** {well.country}
-			""")
+		with st.expander("Well Review",expanded=True):
+
+			st.info(f"""
+				**Well Name:** {well.name}  
+				**Field:** {well.field}  
+				**Operator:** {well.operator}  
+				**Country:** {well.country}
+				""")
+
+		with st.expander("Water Injection",expanded=False):
+
+			pass
 		
-		st.sidebar.divider()
-		
-		# Analysis options
-		st.sidebar.header("⚙️ Analysis Options")
-		analysis_period = st.sidebar.selectbox(
-			"Analysis Period",
-			["All data","Last 30 days","Last 90 days","Last 6 months","Last year"]
-		)
-		
-		return analysis_period
-	
 	@staticmethod
 	def render_header(well:Well):
 		"""Render main header"""
@@ -68,23 +62,21 @@ class WellDash:
 		col1, col2 = st.columns(2)
 		
 		with col1:
+
 			st.subheader("3D Well Profile")
 
-			fig = well_3D_profile(well.survey)
+			fig = well_3D_profile(
+				well.survey,
+				well.perfs.base.iloc[-1],
+				well.perfs.top.iloc[0],
+				zmultp=2
+			)
 
-			st.plotly_chart(fig, use_container_width=True)
-			
-			# construction_info = pd.DataFrame([
-			# 	['Spud Date', well_data['spud_date']],
-			# 	['Completion Date', well_data['completion_date']],
-			# 	['Total Depth', f"{well_data['total_depth']} ft"],
-			# 	['Casing Size', well_data['casing_size']],
-			# 	['Status', well_data['current_status']]
-			# ], columns=['Parameter', 'Value'])
-			
+			st.plotly_chart(fig, use_container_width=True)		
 			# st.dataframe(construction_info, use_container_width=True, hide_index=True)
 		
 		with col2:
+
 			st.subheader("Completion Schematic")
 			fig = well_schematic(well.layout)
 			st.plotly_chart(fig, use_container_width=True)
@@ -291,10 +283,12 @@ class WellDash:
 	def run(well:Well):
 		"""Main application runner"""
 		# Render sidebar
-		analysis_period = WellDash.render_sidebar(well)
+
+		with st.sidebar:
+			WellStream.render_sidebar(well)
 		
 		# Render header
-		WellDash.render_header(well)
+		WellStream.render_header(well)
 		
 		# Main tabs
 		tab1, tab2, tab3, tab4, tab5 = st.tabs([
@@ -306,16 +300,16 @@ class WellDash:
 		])
 		
 		with tab1:
-			WellDash.render_construction(well)
+			WellStream.render_construction(well)
 			
 		with tab2:
-			WellDash.render_production(well)
+			WellStream.render_production(well)
 			
 		with tab3:
-			WellDash.render_intervention(well)
+			WellStream.render_intervention(well)
 		
 		with tab4:
-			WellDash.render_reservoir(well)
+			WellStream.render_reservoir(well)
 			
 		with tab5:
-			WellDash.render_fluid_analysis(well)
+			WellStream.render_fluid_analysis(well)

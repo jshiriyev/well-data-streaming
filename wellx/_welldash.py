@@ -25,33 +25,25 @@ from .items import Well
 
 from .items._profile import well_3D_profile, well_schematic
 
-class WellDash:
+from ._custom import _render_subplot
+
+class WellStream:
 	
 	@staticmethod
-	def render_sidebar(well:Well):
+	def render_summary(well:Well):
 		"""Render sidebar with well information and controls"""
-		st.sidebar.header("🛢️ Well Information")
 
-		st.sidebar.info(f"""
+		st.header("🛢️ Well Information")
+
+		st.info(f"""
 			**Well Name:** {well.name}  
 			**Field:** {well.field}  
 			**Operator:** {well.operator}  
 			**Country:** {well.country}
 			""")
-		
-		st.sidebar.divider()
-		
-		# Analysis options
-		st.sidebar.header("⚙️ Analysis Options")
-		analysis_period = st.sidebar.selectbox(
-			"Analysis Period",
-			["All data","Last 30 days","Last 90 days","Last 6 months","Last year"]
-		)
-		
-		return analysis_period
 	
 	@staticmethod
-	def render_header(well:Well):
+	def render_review_header(well:Well):
 		"""Render main header"""
 		
 		col1, col2, col3 = st.columns([2, 1, 1])
@@ -61,30 +53,28 @@ class WellDash:
 			st.caption(f"{well.field} | {well.operator}")
 	
 	@staticmethod
-	def render_construction(well:Well):
+	def render_review_construction(well:Well):
 
 		st.header("🏗️ Well Construction")
 			
 		col1, col2 = st.columns(2)
 		
 		with col1:
+
 			st.subheader("3D Well Profile")
 
-			fig = well_3D_profile(well.survey)
+			fig = well_3D_profile(
+				well.survey,
+				well.perfs.base.iloc[-1],
+				well.perfs.top.iloc[0],
+				zmultp=2
+			)
 
-			st.plotly_chart(fig, use_container_width=True)
-			
-			# construction_info = pd.DataFrame([
-			# 	['Spud Date', well_data['spud_date']],
-			# 	['Completion Date', well_data['completion_date']],
-			# 	['Total Depth', f"{well_data['total_depth']} ft"],
-			# 	['Casing Size', well_data['casing_size']],
-			# 	['Status', well_data['current_status']]
-			# ], columns=['Parameter', 'Value'])
-			
+			st.plotly_chart(fig, use_container_width=True)		
 			# st.dataframe(construction_info, use_container_width=True, hide_index=True)
 		
 		with col2:
+
 			st.subheader("Completion Schematic")
 			fig = well_schematic(well.layout)
 			st.plotly_chart(fig, use_container_width=True)
@@ -92,7 +82,7 @@ class WellDash:
 			# completion_file = st.file_uploader("Upload Completion Diagram", type=['pdf', 'png', 'jpg'])
 
 	@staticmethod
-	def render_production(well:Well):
+	def render_review_production(well:Well):
 		"""Render production analysis tab"""
 		st.header("📈 Production Analytics")
 		
@@ -139,7 +129,7 @@ class WellDash:
 			st.plotly_chart(fig, use_container_width=True)
 	
 	@staticmethod
-	def render_intervention(well:Well):
+	def render_review_intervention(well:Well):
 		"""Render intervention analysis tab"""
 		st.header("🔧 Intervention Record")
 		
@@ -148,38 +138,13 @@ class WellDash:
 		with col1:
 			st.subheader("Intervention History")
 			st.dataframe(well.perfs, use_container_width=True)
-			
-		# 	# Total costs
-		# 	total_cost = intervention_data['cost'].sum()
-		# 	st.metric("Total Intervention Cost", f"${total_cost:,.0f}")
-			
-		# with col2:
-		# 	# Cost by intervention type
-		# 	fig = px.pie(
-		# 		intervention_data, 
-		# 		values='cost', 
-		# 		names='type',
-		# 		title='Intervention Costs by Type'
-		# 	)
-		# 	st.plotly_chart(fig, use_container_width=True)
-			
-		# 	# Timeline
-		# 	fig = px.timeline(
-		# 		intervention_data,
-		# 		x_start='date',
-		# 		x_end='date',
-		# 		y='type',
-		# 		color='cost',
-		# 		title='Intervention Timeline'
-		# 	)
-		# 	st.plotly_chart(fig, use_container_width=True)
 
 	@staticmethod
-	def render_reservoir(well:Well):
+	def render_review_reservoir(well:Well):
 		"""Render reservoir analysis tab"""
 		formation_data = well.reservoir
 
-		st.header("🗻 Reservoir Properties")
+		st.header("🗻 Reservoir Description")
 		
 		col1, col2 = st.columns(2)
 		
@@ -243,58 +208,152 @@ class WellDash:
 			st.plotly_chart(fig, use_container_width=True)
 	
 	@staticmethod
-	def render_fluid_analysis(well:Well):
+	def render_review_fluid_analysis(well:Well):
 		"""Render advanced analysis tab"""
 		st.header("🧪 Fluid Analysis")
 		
 		col1, col2 = st.columns(2)
-		
-		# with col1:
-		# 	st.subheader("Core Analysis Upload")
-		# 	core_file = st.file_uploader("Upload Core Analysis", type=['csv', 'xlsx', 'las'])
-			
-		# 	st.subheader("Fluid Analysis Upload")
-		# 	fluid_file = st.file_uploader("Upload Fluid Analysis", type=['csv', 'xlsx'])
-			
-		# with col2:
-		# 	st.subheader("Well Logs Upload")
-		# 	log_file = st.file_uploader("Upload Well Logs", type=['las', 'csv'])
-			
-		# 	st.subheader("Formation Tops")
-		# 	tops_file = st.file_uploader("Upload Formation Tops", type=['csv', 'xlsx'])
-		
-		# # PVT Analysis section
-		# st.subheader("PVT Analysis")
-		
-		# # Sample PVT data
-		# pvt_data = pd.DataFrame({
-		# 	'pressure': np.linspace(1000, 3000, 20),
-		# 	'oil_fvf': 1.2 + 0.0002 * np.linspace(1000, 3000, 20),
-		# 	'gas_fvf': 0.8 + 0.0001 * np.linspace(1000, 3000, 20),
-		# 	'solution_gor': 500 + 0.1 * np.linspace(1000, 3000, 20)
-		# })
-		
-		# fig = make_subplots(
-		# 	rows=2, cols=2,
-		# 	subplot_titles=('Oil FVF', 'Gas FVF', 'Solution GOR', 'Viscosity'),
-		# 	vertical_spacing=0.1
-		# )
-		
-		# fig.add_trace(go.Scatter(x=pvt_data['pressure'], y=pvt_data['oil_fvf'], name='Oil FVF'), row=1, col=1)
-		# fig.add_trace(go.Scatter(x=pvt_data['pressure'], y=pvt_data['gas_fvf'], name='Gas FVF'), row=1, col=2)
-		# fig.add_trace(go.Scatter(x=pvt_data['pressure'], y=pvt_data['solution_gor'], name='Solution GOR'), row=2, col=1)
-		
-		# fig.update_layout(height=600, title_text="PVT Properties")
-		# st.plotly_chart(fig, use_container_width=True)
 	
+	@staticmethod
+	def render_custom_summary():
+
+		if "grid_rows" not in st.session_state:
+			st.session_state.grid_rows = 2
+		if "grid_cols" not in st.session_state:
+			st.session_state.grid_cols = 2
+		if "subplot_cfgs" not in st.session_state:
+	        st.session_state.subplot_cfgs = {}
+
+		st.number_input("Rows", 1, 6, key="grid_rows")
+        st.number_input("Cols", 1, 6, key="grid_cols")
+
+	@staticmethod
+	def render_custom_header(well:Well):
+
+		st.title("🛢️ Well Plot Builder")
+		st.caption("Pick a grid layout, then configure each subplot. Works with most well object shapes.")
+
+		rows = st.session_state.grid_rows
+		cols = st.session_state.grid_cols
+
+		for r in range(rows):
+			columns = st.columns(cols)
+			for c in range(cols):
+				i = r * cols + c
+				with columns[c]:
+					WellStream.render_custom_subplot(i, st.session_state.df_map)
+
+	@staticmethod
+	def render_custom_subplot(i: int, df_map: Dict[str, pd.DataFrame], share_x_hint: Optional[str] = None):
+
+		cfg: SubplotConfig = st.session_state.subplot_cfgs[i]
+
+		with st.expander(f"Subplot {i+1} • settings", expanded=(i == 0)):
+			df_key = st.selectbox(
+				"Data source",
+				options=["— select —"] + list(df_map.keys()),
+				index=(list(df_map.keys()).index(cfg.df_key) + 1) if cfg.df_key in df_map else 0,
+				key=f"dfkey_{i}",
+			)
+			if df_key != "— select —":
+				cfg.df_key = df_key
+				df = df_map[df_key].copy()
+
+				# Candidate x and y columns
+				x_opts = _infer_x_candidates(df)
+				num_cols = _numeric_columns(df)
+				all_cols = _all_columns(df)
+
+				# Pick x
+				x_idx = x_opts.index(cfg.x_col) if cfg.x_col in x_opts else 0
+				cfg.x_col = st.selectbox("X axis", options=x_opts, index=x_idx, key=f"x_{i}")
+
+				# Pick y (multi-select numeric)
+				default_y = [c for c in cfg.y_cols if c in num_cols]
+				if not default_y and num_cols:
+					default_y = [num_cols[0]]
+				cfg.y_cols = tuple(
+					st.multiselect("Y column(s)", options=num_cols, default=default_y, key=f"y_{i}")
+				)
+
+				# Plot type
+				cfg.plot_type = st.selectbox("Plot type", DEFAULT_PLOT_TYPES, index=DEFAULT_PLOT_TYPES.index(cfg.plot_type) if cfg.plot_type in DEFAULT_PLOT_TYPES else 0, key=f"type_{i}")
+
+				# Query filter
+				cfg.filter_expr = st.text_input(
+					"Filter (pandas query, optional)", value=cfg.filter_expr, placeholder="e.g., GR < 80 and DEPT.between(1500, 2500)",
+					key=f"filter_{i}",
+				)
+
+				# Resample
+				cols = st.columns(3)
+				with cols[0]:
+					cfg.resample_rule = st.text_input("Resample rule (optional)", value=cfg.resample_rule, placeholder="e.g., 1D, 1H, 10min", key=f"rs_{i}")
+				with cols[1]:
+					cfg.agg = st.selectbox("Aggregation", DEFAULT_AGGS, index=DEFAULT_AGGS.index(cfg.agg) if cfg.agg in DEFAULT_AGGS else 0, key=f"agg_{i}")
+				with cols[2]:
+					cfg.log_x = st.checkbox("log X", value=cfg.log_x, key=f"logx_{i}")
+					cfg.log_y = st.checkbox("log Y", value=cfg.log_y, key=f"logy_{i}")
+
+				# Apply transform for preview table
+				preview_df = _apply_filter_and_resample(df, cfg)
+				st.dataframe(preview_df.head(10), use_container_width=True)
+
+		# Render chart if configured
+		if cfg.df_key and cfg.df_key in df_map and cfg.y_cols:
+			work = _apply_filter_and_resample(df_map[cfg.df_key], cfg)
+			x, ys, x_name = _get_x_y(work, cfg)
+
+			# Build a tidy frame for plotly
+			plot_df_rows = []
+			for col, s in ys.items():
+				# Align lengths if resampled changed index
+				try:
+					if len(s) != len(x):
+						s = s.reindex(work.index) if cfg.x_col == "__index__" else s
+				except Exception:
+					pass
+				plot_df_rows.append(pd.DataFrame({x_name: x, "value": s, "series": col}))
+			if not plot_df_rows:
+				st.warning("Nothing to plot yet—choose at least one Y column.")
+				return
+			tidy = pd.concat(plot_df_rows, ignore_index=True)
+
+			# Draw
+			if cfg.plot_type == "scatter":
+				fig = px.scatter(tidy, x=x_name, y="value", color="series")
+			elif cfg.plot_type == "step":
+				# Workaround: line_shape="hv" as a step-like
+				fig = px.line(tidy, x=x_name, y="value", color="series")
+				fig.update_traces(line_shape="hv")
+			else:
+				fig = px.line(tidy, x=x_name, y="value", color="series")
+
+			# Log scales
+			fig.update_layout(
+				xaxis_type="log" if cfg.log_x else "linear",
+				yaxis_type="log" if cfg.log_y else "linear",
+				margin=dict(l=10, r=10, t=10, b=10),
+				height=350,
+			)
+
+			# Share x across subplots if desired (heuristic: same x dtype)
+			if share_x_hint:
+				fig.update_xaxes(matches=share_x_hint)
+
+			st.plotly_chart(fig, use_container_width=True)
+		else:
+			st.info("Select a data source and at least one Y column to render this subplot.")
+
 	@staticmethod
 	def run(well:Well):
 		"""Main application runner"""
-		# Render sidebar
-		analysis_period = WellDash.render_sidebar(well)
+		
+		with st.sidebar:
+			WellStream.render_review_summary(well)
 		
 		# Render header
-		WellDash.render_header(well)
+		WellStream.render_review_header(well)
 		
 		# Main tabs
 		tab1, tab2, tab3, tab4, tab5 = st.tabs([
@@ -306,16 +365,16 @@ class WellDash:
 		])
 		
 		with tab1:
-			WellDash.render_construction(well)
+			WellStream.render_review_construction(well)
 			
 		with tab2:
-			WellDash.render_production(well)
+			WellStream.render_review_production(well)
 			
 		with tab3:
-			WellDash.render_intervention(well)
+			WellStream.render_review_intervention(well)
 		
 		with tab4:
-			WellDash.render_reservoir(well)
+			WellStream.render_review_reservoir(well)
 			
 		with tab5:
-			WellDash.render_fluid_analysis(well)
+			WellStream.render_review_fluid_analysis(well)
