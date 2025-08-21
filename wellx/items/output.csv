@@ -1,6 +1,0 @@
-well,string_id,segment_id,kind,section,top_md_m,bottom_md_m,outer_diam_in,inner_diam_in,weight_lbft,grade,connection,hole_diam_in,cement_top_md_m,shoe_md_m,hanger_md_m,crossover_md_m,comments
-GUN-142,COND-1,1,casing,conductor,0,60,20.0,18.75,94.0,K55,Welded,26.0,0.0,60,,,Conductor pipe
-GUN-142,SURF-1,1,casing,surface,0,500,13.375,12.347,68.0,K55,Buttress,17.5,100.0,500,,,Surface casing
-GUN-142,INT-1,1,casing,intermediate,0,1800,9.625,8.835,47.0,L80,Buttress,12.25,300.0,1800,,,Intermediate casing
-GUN-142,PRD-1,2,casing,production,1800,2900,7.0,6.366,32.0,P110,Premium,8.5,1300.0,2900,,1800.0,Lower tapered section (after crossover)
-GUN-142,LIN-1,1,liner,production,2900,3600,5.5,4.95,20.0,P110,Premium,6.0,,3600,2900.0,,"5-1/2"" liner hung at ~2900 m"

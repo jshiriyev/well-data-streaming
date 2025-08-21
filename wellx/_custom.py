@@ -24,8 +24,8 @@ import streamlit as st
 # -----------------------
 # Option A: "import" -> we import from a module path you specify in the sidebar (e.g., mypkg.my_well:well)
 # Option B: "none"   -> user must upload a pickle of the well object
-DEFAULT_WELL_IMPORT_MODE = "none"  # "import" or "none"
-st.set_page_config(page_title="Well Plot Builder", layout="wide")
+# DEFAULT_WELL_IMPORT_MODE = "none"  # "import" or "none"
+# st.set_page_config(page_title="Well Plot Builder", layout="wide")
 
 # -----------------------
 # Helpers to discover DataFrames inside an arbitrary object
@@ -149,8 +149,8 @@ class SubplotConfig:
     agg: str = "mean"  # mean, sum, min, max, median
     filter_expr: str = ""  # pandas-query string
 
-DEFAULT_PLOT_TYPES = ["line", "scatter", "step"]
-DEFAULT_AGGS = ["mean", "sum", "min", "max", "median"]
+# DEFAULT_PLOT_TYPES = ["line", "scatter", "step"]
+# DEFAULT_AGGS = ["mean", "sum", "min", "max", "median"]
 
 def _ensure_session():
     if "grid_rows" not in st.session_state:
@@ -164,162 +164,161 @@ def _ensure_session():
     if "df_map" not in st.session_state:
         st.session_state.df_map = {}
 
-_ensure_session()
-
+# _ensure_session()
 # -----------------------
 # Sidebar: bring in well
 # -----------------------
-st.sidebar.header("Well Source")
+# st.sidebar.header("Well Source")
 
-import_mode = st.sidebar.selectbox(
-    "How do you want to provide the well?",
-    options=["none (upload)", "import module path"],
-    index=0 if DEFAULT_WELL_IMPORT_MODE == "none" else 1,
-)
+# import_mode = st.sidebar.selectbox(
+#     "How do you want to provide the well?",
+#     options=["none (upload)", "import module path"],
+#     index=0 if DEFAULT_WELL_IMPORT_MODE == "none" else 1,
+# )
 
-if import_mode == "import module path":
-    module_path = st.sidebar.text_input(
-        "Module path (format: module.submodule:var_name)",
-        value="my_package.my_well:well",
-        help="Example: mypkg.objects:well_obj  → imports 'well_obj' from module 'mypkg.objects'",
-    )
-    if st.sidebar.button("Import well"):
-        try:
-            mod_str, var_name = module_path.split(":")
-            mod = __import__(mod_str, fromlist=["*"])
-            well_obj = getattr(mod, var_name)
-            st.session_state.well = well_obj
-            st.success("Imported well from module path.")
-        except Exception as e:
-            st.error(f"Import failed: {e}")
+# if import_mode == "import module path":
+#     module_path = st.sidebar.text_input(
+#         "Module path (format: module.submodule:var_name)",
+#         value="my_package.my_well:well",
+#         help="Example: mypkg.objects:well_obj  → imports 'well_obj' from module 'mypkg.objects'",
+#     )
+#     if st.sidebar.button("Import well"):
+#         try:
+#             mod_str, var_name = module_path.split(":")
+#             mod = __import__(mod_str, fromlist=["*"])
+#             well_obj = getattr(mod, var_name)
+#             st.session_state.well = well_obj
+#             st.success("Imported well from module path.")
+#         except Exception as e:
+#             st.error(f"Import failed: {e}")
 
-else:
-    uploaded = st.sidebar.file_uploader("Upload pickled well (.pkl)", type=["pkl", "pickle"])
-    if uploaded is not None:
-        try:
-            import pickle
-            well_obj = pickle.load(uploaded)
-            st.session_state.well = well_obj
-            st.success("Loaded well from uploaded pickle.")
-        except Exception as e:
-            st.error(f"Failed to load pickle: {e}")
+# else:
+#     uploaded = st.sidebar.file_uploader("Upload pickled well (.pkl)", type=["pkl", "pickle"])
+#     if uploaded is not None:
+#         try:
+#             import pickle
+#             well_obj = pickle.load(uploaded)
+#             st.session_state.well = well_obj
+#             st.success("Loaded well from uploaded pickle.")
+#         except Exception as e:
+#             st.error(f"Failed to load pickle: {e}")
 
-# If not provided yet, offer a tiny mock helper
-with st.sidebar.expander("No well? Create a small demo"):
-    if st.button("Create demo well"):
-        class DemoWell:
-            def __init__(self):
-                idx = pd.date_range("2023-01-01", periods=200, freq="D")
-                df_prod = pd.DataFrame(
-                    {
-                        "oil_bopd": np.random.gamma(20, 5, size=len(idx)),
-                        "water_bwpd": np.random.gamma(5, 3, size=len(idx)),
-                        "gas_mscfd": np.random.gamma(15, 8, size=len(idx)),
-                    },
-                    index=idx,
-                )
-                df_prod.index.name = "date"
-                depth = np.linspace(1000, 3000, 300)
-                df_logs = pd.DataFrame(
-                    {
-                        "DEPT": depth,
-                        "GR": np.clip(np.random.normal(75, 15, len(depth)), 0, 150),
-                        "RHOB": np.clip(np.random.normal(2.4, 0.1, len(depth)), 1.8, 3.0),
-                        "NPHI": np.clip(np.random.normal(0.25, 0.08, len(depth)), 0, 0.6),
-                    }
-                )
-                self.dataframe = df_prod
-                self.logs = df_logs
-                self.curves = {"static": df_logs, "production": df_prod}
+# # If not provided yet, offer a tiny mock helper
+# with st.sidebar.expander("No well? Create a small demo"):
+#     if st.button("Create demo well"):
+#         class DemoWell:
+#             def __init__(self):
+#                 idx = pd.date_range("2023-01-01", periods=200, freq="D")
+#                 df_prod = pd.DataFrame(
+#                     {
+#                         "oil_bopd": np.random.gamma(20, 5, size=len(idx)),
+#                         "water_bwpd": np.random.gamma(5, 3, size=len(idx)),
+#                         "gas_mscfd": np.random.gamma(15, 8, size=len(idx)),
+#                     },
+#                     index=idx,
+#                 )
+#                 df_prod.index.name = "date"
+#                 depth = np.linspace(1000, 3000, 300)
+#                 df_logs = pd.DataFrame(
+#                     {
+#                         "DEPT": depth,
+#                         "GR": np.clip(np.random.normal(75, 15, len(depth)), 0, 150),
+#                         "RHOB": np.clip(np.random.normal(2.4, 0.1, len(depth)), 1.8, 3.0),
+#                         "NPHI": np.clip(np.random.normal(0.25, 0.08, len(depth)), 0, 0.6),
+#                     }
+#                 )
+#                 self.dataframe = df_prod
+#                 self.logs = df_logs
+#                 self.curves = {"static": df_logs, "production": df_prod}
 
-        st.session_state.well = DemoWell()
-        st.success("Demo well created.")
+#         st.session_state.well = DemoWell()
+#         st.success("Demo well created.")
 
-# -----------------------
-# Discover dataframes
-# -----------------------
-st.sidebar.markdown("---")
-if st.session_state.well is not None:
-    df_map = _walk_object_for_dfs(st.session_state.well, prefix="well")
-    # De-duplicate identical objects by id
-    canonical: Dict[int, str] = {}
-    unique_df_map: Dict[str, pd.DataFrame] = {}
-    for k, df in df_map.items():
-        ptr = id(df)
-        if ptr in canonical:
-            continue
-        canonical[ptr] = k
-        unique_df_map[k] = df.copy()
-    st.session_state.df_map = unique_df_map
+# # -----------------------
+# # Discover dataframes
+# # -----------------------
+# st.sidebar.markdown("---")
+# if st.session_state.well is not None:
+#     df_map = _walk_object_for_dfs(st.session_state.well, prefix="well")
+#     # De-duplicate identical objects by id
+#     canonical: Dict[int, str] = {}
+#     unique_df_map: Dict[str, pd.DataFrame] = {}
+#     for k, df in df_map.items():
+#         ptr = id(df)
+#         if ptr in canonical:
+#             continue
+#         canonical[ptr] = k
+#         unique_df_map[k] = df.copy()
+#     st.session_state.df_map = unique_df_map
 
-if not st.session_state.df_map:
-    st.info("Provide a well object (import or upload) to start. Then I’ll scan it for DataFrames.")
-else:
-    with st.sidebar.expander("Data sources found", expanded=False):
-        for name, df in st.session_state.df_map.items():
-            st.caption(f"• {name}  — shape {df.shape}")
+# if not st.session_state.df_map:
+#     st.info("Provide a well object (import or upload) to start. Then I’ll scan it for DataFrames.")
+# else:
+#     with st.sidebar.expander("Data sources found", expanded=False):
+#         for name, df in st.session_state.df_map.items():
+#             st.caption(f"• {name}  — shape {df.shape}")
 
-# -----------------------
-# Presets: Save/Load layout
-# -----------------------
-st.sidebar.markdown("---")
-st.sidebar.subheader("Layout Presets")
-preset_upload = st.sidebar.file_uploader("Load preset (.json)", type=["json"], key="preset_upload")
-if preset_upload is not None:
-    try:
-        preset = json.load(preset_upload)
-        st.session_state.grid_rows = int(preset["rows"])
-        st.session_state.grid_cols = int(preset["cols"])
-        st.session_state.subplot_cfgs = {
-            int(k): SubplotConfig(**v) for k, v in preset.get("subplot_cfgs", {}).items()
-        }
-        st.success("Preset loaded.")
-    except Exception as e:
-        st.error(f"Failed to load preset: {e}")
+# # -----------------------
+# # Presets: Save/Load layout
+# # -----------------------
+# st.sidebar.markdown("---")
+# st.sidebar.subheader("Layout Presets")
+# preset_upload = st.sidebar.file_uploader("Load preset (.json)", type=["json"], key="preset_upload")
+# if preset_upload is not None:
+#     try:
+#         preset = json.load(preset_upload)
+#         st.session_state.grid_rows = int(preset["rows"])
+#         st.session_state.grid_cols = int(preset["cols"])
+#         st.session_state.subplot_cfgs = {
+#             int(k): SubplotConfig(**v) for k, v in preset.get("subplot_cfgs", {}).items()
+#         }
+#         st.success("Preset loaded.")
+#     except Exception as e:
+#         st.error(f"Failed to load preset: {e}")
 
-def _download_preset_button():
-    out = {
-        "rows": st.session_state.grid_rows,
-        "cols": st.session_state.grid_cols,
-        "subplot_cfgs": {
-            idx: vars(cfg) for idx, cfg in st.session_state.subplot_cfgs.items()
-        },
-    }
-    st.download_button(
-        "💾 Download current preset",
-        data=json.dumps(out, indent=2),
-        file_name="well_plot_layout.json",
-        mime="application/json",
-    )
+# def _download_preset_button():
+#     out = {
+#         "rows": st.session_state.grid_rows,
+#         "cols": st.session_state.grid_cols,
+#         "subplot_cfgs": {
+#             idx: vars(cfg) for idx, cfg in st.session_state.subplot_cfgs.items()
+#         },
+#     }
+#     st.download_button(
+#         "💾 Download current preset",
+#         data=json.dumps(out, indent=2),
+#         file_name="well_plot_layout.json",
+#         mime="application/json",
+#     )
 
-# -----------------------
-# Main UI: Grid controls
-# -----------------------
-st.title("🛢️ Well Plot Builder")
-st.caption("Pick a grid layout, then configure each subplot. Works with most well object shapes.")
+# # -----------------------
+# # Main UI: Grid controls
+# # -----------------------
+# st.title("🛢️ Well Plot Builder")
+# st.caption("Pick a grid layout, then configure each subplot. Works with most well object shapes.")
 
-with st.container():
-    col_a, col_b, col_c, col_d = st.columns([1, 1, 1, 1])
-    with col_a:
-        st.number_input("Rows", 1, 6, key="grid_rows")
-    with col_b:
-        st.number_input("Cols", 1, 6, key="grid_cols")
-    with col_c:
-        share_x = st.checkbox("Share x-axis (by type)", value=False)
-    with col_d:
-        _download_preset_button()
+# with st.container():
+#     col_a, col_b, col_c, col_d = st.columns([1, 1, 1, 1])
+#     with col_a:
+#         st.number_input("Rows", 1, 6, key="grid_rows")
+#     with col_b:
+#         st.number_input("Cols", 1, 6, key="grid_cols")
+#     with col_c:
+#         share_x = st.checkbox("Share x-axis (by type)", value=False)
+#     with col_d:
+#         _download_preset_button()
 
-total_plots = st.session_state.grid_rows * st.session_state.grid_cols
+# total_plots = st.session_state.grid_rows * st.session_state.grid_cols
 
-# Ensure configs exist
-for i in range(total_plots):
-    if i not in st.session_state.subplot_cfgs:
-        st.session_state.subplot_cfgs[i] = SubplotConfig()
+# # Ensure configs exist
+# for i in range(total_plots):
+#     if i not in st.session_state.subplot_cfgs:
+#         st.session_state.subplot_cfgs[i] = SubplotConfig()
 
-# Trim configs if user reduced grid size
-for i in sorted(list(st.session_state.subplot_cfgs.keys()), reverse=True):
-    if i >= total_plots:
-        del st.session_state.subplot_cfgs[i]
+# # Trim configs if user reduced grid size
+# for i in sorted(list(st.session_state.subplot_cfgs.keys()), reverse=True):
+#     if i >= total_plots:
+#         del st.session_state.subplot_cfgs[i]
 
 # -----------------------
 # Subplot configuration + rendering
@@ -473,46 +472,46 @@ def _render_subplot(i: int, df_map: Dict[str, pd.DataFrame], share_x_hint: Optio
 # Render the grid
 # -----------------------
 # Heuristic: determine a "share_x" name by chosen x dtype in first configured subplot
-share_x_name = None
-if share_x:
-    for i in range(total_plots):
-        cfg = st.session_state.subplot_cfgs[i]
-        if cfg.df_key and cfg.x_col:
-            # Identify dtype bucket: datetime / numeric / other
-            df = st.session_state.df_map[cfg.df_key]
-            if cfg.x_col == "__index__":
-                x_series = df.index.to_series()
-            else:
-                x_series = df[cfg.x_col] if cfg.x_col in df.columns else pd.Series(dtype=float)
-            if _datetime_like(x_series):
-                share_x_name = "x_datetime"
-            elif pd.api.types.is_numeric_dtype(x_series):
-                share_x_name = "x_numeric"
-            else:
-                share_x_name = "x_other"
-            break
+# share_x_name = None
+# if share_x:
+#     for i in range(total_plots):
+#         cfg = st.session_state.subplot_cfgs[i]
+#         if cfg.df_key and cfg.x_col:
+#             # Identify dtype bucket: datetime / numeric / other
+#             df = st.session_state.df_map[cfg.df_key]
+#             if cfg.x_col == "__index__":
+#                 x_series = df.index.to_series()
+#             else:
+#                 x_series = df[cfg.x_col] if cfg.x_col in df.columns else pd.Series(dtype=float)
+#             if _datetime_like(x_series):
+#                 share_x_name = "x_datetime"
+#             elif pd.api.types.is_numeric_dtype(x_series):
+#                 share_x_name = "x_numeric"
+#             else:
+#                 share_x_name = "x_other"
+#             break
 
-rows = st.session_state.grid_rows
-cols = st.session_state.grid_cols
+# rows = st.session_state.grid_rows
+# cols = st.session_state.grid_cols
 
-for r in range(rows):
-    columns = st.columns(cols)
-    for c in range(cols):
-        i = r * cols + c
-        with columns[c]:
-            _render_subplot(i, st.session_state.df_map, share_x_hint=share_x_name)
+# for r in range(rows):
+#     columns = st.columns(cols)
+#     for c in range(cols):
+#         i = r * cols + c
+#         with columns[c]:
+#             _render_subplot(i, st.session_state.df_map, share_x_hint=share_x_name)
 
-# -----------------------
-# Footer tips
-# -----------------------
-st.markdown("---")
-with st.expander("Tips & Examples"):
-    st.markdown(
-        """
-- **Depth plots**: pick `DEPT` (or `depth`) as X and e.g. `GR`, `RHOB`, `NPHI` as Y with `step` or `line`.
-- **Production over time**: if your production DataFrame has a DatetimeIndex, set X to `__index__` and choose `oil_bopd`, `water_bwpd`, etc.
-- **Resampling**: For daily production → monthly, set *Resample rule* to `1M` and Aggregation to `sum` or `mean`.
-- **Filter**: Use pandas query syntax, e.g. `DEPT >= 1500 and DEPT <= 2500` or `GR < 80`.
-- **Presets**: Design once, click **Download current preset**, and load it next time.
-        """
-    )
+# # -----------------------
+# # Footer tips
+# # -----------------------
+# st.markdown("---")
+# with st.expander("Tips & Examples"):
+#     st.markdown(
+#         """
+# - **Depth plots**: pick `DEPT` (or `depth`) as X and e.g. `GR`, `RHOB`, `NPHI` as Y with `step` or `line`.
+# - **Production over time**: if your production DataFrame has a DatetimeIndex, set X to `__index__` and choose `oil_bopd`, `water_bwpd`, etc.
+# - **Resampling**: For daily production → monthly, set *Resample rule* to `1M` and Aggregation to `sum` or `mean`.
+# - **Filter**: Use pandas query syntax, e.g. `DEPT >= 1500 and DEPT <= 2500` or `GR < 80`.
+# - **Presets**: Design once, click **Download current preset**, and load it next time.
+#         """
+#     )

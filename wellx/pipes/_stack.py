@@ -1,6 +1,6 @@
 from typing import Union, List, Dict
 
-import pandas
+import pandas as pd
 
 class TableStack():
 
@@ -18,7 +18,7 @@ class TableStack():
         """
         self.printFlag = printFlag
 
-    def _extract(self,frame:pandas.DataFrame,*args) -> Dict[str,pandas.DataFrame]:
+    def _extract(self,frame:pd.DataFrame,*args) -> Dict[str,pd.DataFrame]:
         """
         Function to read an Excel sheet, process the data, and return a dictionary of DataFrames for specified intervals.
 
@@ -68,7 +68,7 @@ class TableStack():
         # Return the dictionary of tables
         return tables
 
-    def _process(self,**kwargs) -> Dict[str,pandas.DataFrame]:
+    def _process(self,**kwargs) -> Dict[str,pd.DataFrame]:
         """
         Function to process tables (output of the 'extract' function) by cleaning up any columns
         that contain only missing values and return the updated tables:
@@ -94,13 +94,13 @@ class TableStack():
                 continue
 
             # Convert first column to datetime
-            frame.loc[:,frame.columns[0]] = pandas.to_datetime(frame[frame.columns[0]],errors='coerce')
+            frame.loc[:,frame.columns[0]] = pd.to_datetime(frame[frame.columns[0]],errors='coerce')
 
             # Set first column as index
             frame.set_index(frame.columns[0],inplace=True)  # Set datetime column as index
 
             # Convert all values to numeric (coerce errors)
-            frame = frame.apply(pandas.to_numeric,errors='coerce')
+            frame = frame.apply(pd.to_numeric,errors='coerce')
 
             # If printFlag is True, print the shape of the updated table
             if self.printFlag:
@@ -128,7 +128,7 @@ class TableStack():
         - The extracted tables after cleaning.
         """
         # Step 1: Read the specified sheet from the Excel file into a DataFrame, with no header
-        frame = pandas.read_excel(file_path,sheet_name=sheet_name,header=None)
+        frame = pd.read_excel(file_path,sheet_name=sheet_name,header=None)
 
         # Step 2: Call the 'extract' function to read and process the tables from the Excel sheet
         tables = self._extract(frame,*args)
@@ -150,7 +150,7 @@ class TableStack():
         return tables
 
     @staticmethod
-    def compare(frame1:pandas.DataFrame,frame2:pandas.DataFrame,printFlag:bool=False):
+    def compare(frame1:pd.DataFrame,frame2:pd.DataFrame,printFlag:bool=False):
         """
         Compare the columns of two dataframes and find differences (columns that are only in one dataframe).
 

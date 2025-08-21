@@ -90,7 +90,7 @@ class Rate:
 
     otype: Literal["production", "injection"] = "production"
 
-    mode: Optional[str] = None # production or injection method such as fountain, gas-lift, etc.
+    method: Optional[str] = None # production or injection method such as fountain, gas-lift, etc.
 
     choke: Optional[float] = None
 

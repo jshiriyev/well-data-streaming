@@ -63,7 +63,6 @@ DEFAULT_PALETTE: Dict[StatusCode, str] = {
     StatusCode.ABANDONMENT:  "#0f172a",  # very dark slate
 }
 
-
 def parse_status(value: str) -> StatusCode:
     """
     Map a free-text status to StatusCode (case-insensitive, handles common aliases).
@@ -88,7 +87,6 @@ def parse_status(value: str) -> StatusCode:
         return StatusCode(v)
     except ValueError as e:
         raise ValueError(f"Unknown status '{value}'. Allowed: {[s.value for s in StatusCode]}") from e
-
 
 @dataclass(frozen=True, slots=True)
 class Status:

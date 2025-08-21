@@ -26,8 +26,8 @@ class PerfInterval:
     PerfInterval(top=1005.0, base=1092.0)
     >>> PerfInterval(1500.0, 1500.0).length
     0.0
-    """
 
+    """
     top: float = field(metadata={"unit": "m"})
     base: float = field(default=None, metadata={"unit": "m"})
 

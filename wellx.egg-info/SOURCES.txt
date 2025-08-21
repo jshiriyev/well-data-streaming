@@ -11,8 +11,8 @@ tests/test_items_rates_rate.py
 tests/test_items_rates_ratetable.py
 tests/test_items_well.py
 tests/test_pipes_table.py
-tests/test_pipes_utils.py
 wellx/__init__.py
+wellx/_custom.py
 wellx/_dcadash.py
 wellx/_dcadash_dataselect.py
 wellx/_request.py
@@ -33,7 +33,6 @@ wellx/items/completion/__init__.py
 wellx/items/completion/_intervs.py
 wellx/items/completion/_layout.py
 wellx/items/completion/_perfs.py
-wellx/items/completion/_pipe.py
 wellx/items/drilling/__init__.py
 wellx/items/general/__init__.py
 wellx/items/general/_name.py
@@ -48,4 +47,3 @@ wellx/pipes/_schedule.py
 wellx/pipes/_stack.py
 wellx/pipes/_table.py
 wellx/pipes/_txtfile.py
-wellx/pipes/_utils.py

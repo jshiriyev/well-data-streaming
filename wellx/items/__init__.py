@@ -10,6 +10,4 @@ from .completion import PerfInterval, Perf, PerfTable, Layout
 
 from ._rates import Rate, RateTable
 
-from ._profile import well_3D_profile, well_schematic
-
 from ._well import Well

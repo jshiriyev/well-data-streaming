@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 
 import io
 
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import numpy as np
 import pandas as pd
 
@@ -222,10 +224,10 @@ class WellStream:
 		if "grid_cols" not in st.session_state:
 			st.session_state.grid_cols = 2
 		if "subplot_cfgs" not in st.session_state:
-	        st.session_state.subplot_cfgs = {}
+			st.session_state.subplot_cfgs = {}
 
 		st.number_input("Rows", 1, 6, key="grid_rows")
-        st.number_input("Cols", 1, 6, key="grid_cols")
+		st.number_input("Cols", 1, 6, key="grid_cols")
 
 	@staticmethod
 	def render_custom_header(well:Well):
@@ -350,7 +352,7 @@ class WellStream:
 		"""Main application runner"""
 		
 		with st.sidebar:
-			WellStream.render_review_summary(well)
+			WellStream.render_summary(well)
 		
 		# Render header
 		WellStream.render_review_header(well)
