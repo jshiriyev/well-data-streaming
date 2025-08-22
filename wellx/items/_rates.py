@@ -313,5 +313,9 @@ class RateTable(Table):
         return RateTable.from_dataframe(df, tiein=dict(tie), validate=False)
 
     @staticmethod
+    def get_current_formation(rates:pd.DataFrame,well:str,date:datetime.date=None):
+        return rates[rates["well"] == well].iloc[-1].formation
+
+    @staticmethod
     def fields() -> list[str]:
         return Rate.fields()
