@@ -17,23 +17,28 @@ class Section:
 
     """
     well        : Optional[str] = field(default="", metadata={"desc": "Well identifier"})
-    name        : Optional[str] = field(default="", metadata={"desc": "Section name/label"})
+    rank        : Optional[int] = field(default=1, metadata={"desc": "Order of section in layout (1-based recommended)"})
     kind        : Optional[str] = field(default="", metadata={"desc": "Section type (casing, liner, tubing, ...)"})
 
     top         : Optional[float] = field(default=None, metadata={"unit": "m", "desc": "Section Top"})
     base        : Optional[float] = field(default=None, metadata={"unit": "m", "desc": "Section Base (> top)"})
-    segment     : Optional[int] = field(default=1, metadata={"desc": "Order of section in layout (1-based recommended)"})
 
     outer_diam  : Optional[float] = field(default=None, metadata={"unit": "inch", "desc": "Outer diameter"})
     inner_diam  : Optional[float] = field(default=None, metadata={"unit": "inch", "desc": "Inner diameter, must be <= outer_diam."})
-
+    thickness = None
+    hole_diam   : Optional[float] = field(default=None, metadata={"unit": "inch", "desc":"Hole diameter. If provided, should be >= outer_diam."})
+    
     weight      : Optional[float] = field(default=None, metadata={"unit": "weight/length"})
     grade       : Optional[str]   = field(default="", metadata={"desc": "Steel grade"})
-    hole_diam   : Optional[float] = field(default=None, metadata={"unit": "inch", "desc":"Hole diameter. If provided, should be >= outer_diam."})
-    cement_top  : Optional[float] = field(default=None, metadata={"unit": "m", "desc": "Cement top MD (for cased sections). Should lie in [top, base]"})
-    shoe        : Optional[float] = field(default=None, metadata={"unit": "m", "desc": "Shoe depth; typically ≈ base depth."})
+
     hanger      : Optional[float] = field(default=None, metadata={"unit": "m", "desc": "Hanger depth (for liners)"})
     crossover   : Optional[float] = field(default=None, metadata={"unit": "m", "desc": "Crossover depth if present"})
+    shoe        : Optional[float] = field(default=None, metadata={"unit": "m", "desc": "Shoe depth; typically ≈ base depth."})
+
+    cement_top  : Optional[float] = field(default=None, metadata={"unit": "m", "desc": "Cement top MD (for cased sections). Should lie in [top, base]"})
+    cement_consumption = None
+    cement_grade: Optional[str] = field(default=None, metadata={"desc": ""})
+
     comment     : Optional[str] = field(default="", metadata={"desc": "Free-form notes."})
 
     @classmethod

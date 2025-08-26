@@ -42,6 +42,7 @@ wellx/maps/_bounds_minzoom.py
 wellx/maps/_halo_hover.py
 wellx/maps/_icons.py
 wellx/maps/_label_toggle.py
+wellx/maps/_recenter.py
 wellx/maps/_vector_layers.py
 wellx/pipes/__init__.py
 wellx/pipes/_database.py

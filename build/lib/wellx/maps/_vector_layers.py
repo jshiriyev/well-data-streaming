@@ -146,7 +146,7 @@ def wells(
 	def _fmt_popup(r:pd.Series):
 
 		if popup_formatter is not None:
-			return popup_formatter(row)
+			return popup_formatter(r)
 
 		name = r.well if isinstance(r.well, str) else "Well"
 		
