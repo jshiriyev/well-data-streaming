@@ -31,6 +31,8 @@ class Rate:
         Horizon/completion name.
     otype : {"production", "injection"}, default "production"
         Operational type of the record.
+    method : str, optional
+        production or injection method such as fountain, gas-lift, etc.
     choke : float, optional
         Choke size (units as per project convention).
     orate : float, default 0.0
@@ -90,7 +92,7 @@ class Rate:
 
     otype: Literal["production", "injection"] = "production"
 
-    method: Optional[str] = None # production or injection method such as fountain, gas-lift, etc.
+    method: Optional[str] = None
 
     choke: Optional[float] = None
 

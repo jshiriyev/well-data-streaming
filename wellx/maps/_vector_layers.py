@@ -170,6 +170,7 @@ def wells(
 		# add a text label
 		label = folium.Marker(
 			[r.lat, r.lon],
+			title=r.well,
 			icon=DivIcon(
 				icon_size=(1,1),	  # minimal; we position via CSS
 				icon_anchor=(0,0),

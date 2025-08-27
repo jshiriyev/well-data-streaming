@@ -3,6 +3,9 @@ from dataclasses import field as dataclassfield
 
 from typing import Optional, Tuple, Dict, Any
 
+import numpy as np
+import pandas as pd
+
 from ._name import Name
 from ._status import Status
 
@@ -268,3 +271,81 @@ class Well:
                 if md < md_min or md > md_max:
                     # Soft rule—choose warning/log instead if you prefer
                     raise ValueError(f"Top MD {md} outside survey range [{md_min}, {md_max}].")
+
+    @staticmethod
+    def label(locs:pd.DataFrame,rates:pd.DataFrame,formation:str) -> pd.DataFrame:
+        """
+        Merge latest rates into wells and label wells by current status w.r.t. a given formation.
+
+        Parameters
+        ----------
+        locs : pd.DataFrame
+            Columns: ["well", "field", "formation", ...].
+        rates : pd.DataFrame
+            Columns: ["well", "date", "otype", ...].
+            'date' may be datetime or string; will be coerced to datetime.
+        formation : str
+            Target formation to classify against (e.g., "FLD").
+
+        Returns
+        -------
+        pd.DataFrame
+            Left-joined frame with all locs, the most recent
+            rates row per well, and a new 'label' column with values:
+                - "producer@formation"   : currently producing from the given formation
+                - "producer@other"       : currently producing, but from a different formation
+                - "inactive"             : not currently producing anywhere (incl. no rates)
+                - "injector@formation"   : currently injecting into the given formation
+                - "other"                : anything else (e.g., injector into other formation, unknown)
+
+        """
+        # Ensure datetime
+        rates_in["date"] = pd.to_datetime(rates_in["date"], errors="coerce")
+        latest_available_date = rates_in.date.iloc[-1]
+
+        # Priority: production first, then injection, then others.
+        otype_cat = pd.CategoricalDtype(categories=["production", "injection"], ordered=True)
+        rates_in["otype"] = rates_in["otype"].astype(otype_cat)
+
+        # Sort -> take the last row per well after sorting by date then otype priority
+        rates_latest = (
+            rates_in
+            .sort_values(["well", "date", "otype"], ascending=[True, True, True])
+            .groupby("well", as_index=False, sort=False)
+            .tail(1)
+        )
+
+        # Merge (left) onto locs
+        out = locs_in.merge(rates_latest, on="well", how="left", suffixes=("", "_rate"))
+
+        # Define activity flags (treat >0 as "active"; adjust if you prefer >= or use 'days')
+        for col in ["orate", "wrate", "grate"]:
+            if col not in out:
+                out[col] = 0.0
+        has_positive_rate = (out[["orate", "wrate", "grate"]] > 0).any(axis=1)
+
+        is_prod = out["otype"].eq("production")
+        is_inj  = out["otype"].eq("injection")
+
+        is_current = out["date"].eq(latest_available_date)
+        is_historic = out["date"].ne(latest_available_date)
+
+        # Classification logic
+        conds = [
+            is_prod & has_positive_rate & out["formation_rate"].eq(formation) & is_current,  # producing from target formation
+            is_prod & has_positive_rate & out["formation_rate"].ne(formation) & is_current,  # producing from other formation
+            (
+                # inactive producers OR locs with no rate row at all
+                is_historic | out["otype"].isna()
+            ),
+            is_inj & has_positive_rate & out["formation_rate"].eq(formation),   # injecting into target formation
+        ]
+        choices = [
+            "producer@formation",
+            "producer@other",
+            "inactive",
+            "injector@formation", 
+        ]
+        out["label"] = np.select(conds, choices, default="other")
+
+        return out

@@ -37,7 +37,7 @@ class ReCenter(MacroElement):
 		var Reset{{ this.get_name() }} = L.Control.extend({
 			onAdd: function(map) {
 				// Create a container for the button
-				var container = L.DomUtil.create('div', 'leaflet-bar');
+				var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
 
 				// Create the button element
 				var btn = L.DomUtil.create('a', '', container);
@@ -46,12 +46,26 @@ class ReCenter(MacroElement):
 				btn.href = '#';
 				
 				// Style the button
-				btn.style.textAlign = 'center';
-				btn.style.lineHeight = '26px';
-				btn.style.width = '26px';
-				btn.style.height = '26px';
+				btn.style.width = '30px';
+                btn.style.height = '30px';
+                btn.style.lineHeight = '30px';
+                btn.style.textAlign = 'center';
+                btn.style.fontSize = '16px';
+                btn.style.textDecoration = 'none';
+                btn.style.backgroundColor = 'white';
+                btn.style.color = 'black';
+                btn.style.display = 'block';
+                btn.style.borderBottom = '1px solid #ccc';
 
-				// Add click event: reset view
+                // Hover effect (same as Leaflet search button)
+                btn.onmouseover = function() {
+                    this.style.backgroundColor = '#f4f4f4';
+                };
+                btn.onmouseout = function() {
+                    this.style.backgroundColor = 'white';
+                };
+
+				// Reset view on click
 				L.DomEvent.on(btn, 'click', function(e) {
 					L.DomEvent.stop(e);
 					map.setView([{{ this.lat }}, {{ this.lon }}], {{ this.zoom }});
