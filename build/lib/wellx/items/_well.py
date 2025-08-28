@@ -299,27 +299,18 @@ class Well:
                 - "other"                : anything else (e.g., injector into other formation, unknown)
 
         """
-        locs_in = locs.copy()
-        rates_in = rates.copy(deep=True)
-
-        # Ensure datetime
-        rates_in["date"] = pd.to_datetime(rates_in["date"], errors="coerce")
-        latest_available_date = rates_in.date.iloc[-1]
-
-        # Priority: production first, then injection, then others.
-        otype_cat = pd.CategoricalDtype(categories=["production", "injection"], ordered=True)
-        rates_in["otype"] = rates_in["otype"].astype(otype_cat)
+        latest_available_date = rates.date.iloc[-1]
 
         # Sort -> take the last row per well after sorting by date then otype priority
         rates_latest = (
-            rates_in
+            rates
             .sort_values(["well", "date", "otype"], ascending=[True, True, True])
             .groupby("well", as_index=False, sort=False)
             .tail(1)
         )
 
         # Merge (left) onto locs
-        out = locs_in.merge(rates_latest, on="well", how="left", suffixes=("", "_rate"))
+        out = locs.merge(rates_latest, on="well", how="left", suffixes=("", "_rate"))
 
         # Define activity flags (treat >0 as "active"; adjust if you prefer >= or use 'days')
         for col in ["orate", "wrate", "grate"]:

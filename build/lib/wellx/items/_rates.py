@@ -1,8 +1,7 @@
-from dataclasses import dataclass, field, fields as dcfields, is_dataclass
-
+from dataclasses import dataclass, field as dcfield, fields as dcfields, is_dataclass
 import datetime
-
-from typing import Iterable, Mapping, Optional, Literal, Dict, Any, List, Union, Sequence
+import json
+from typing import Iterable, Mapping, Optional, Literal, Dict, Any, List, Union, Sequence, Self
 
 import pandas as pd
 
@@ -16,31 +15,6 @@ class Rate:
     Domain assumptions
     ------------------
     - Rate is *surface-standard* and non-negative.
-    - `otype` indicates flow direction: "production" (outflow) or "injection" (inflow).
-    - `days` is the number of contributing days in the period (≥ 0). Use 0 to mark shut-in.
-
-    Parameters
-    ----------
-    well : str
-        Well identifier (non-empty).
-    date : datetime.date
-        Calendar date of record (required).
-    days : int, optional
-        Contributing days in the period. Defaults to 0.
-    formation : str, optional
-        Horizon/completion name.
-    otype : {"production", "injection"}, default "production"
-        Operational type of the record.
-    method : str, optional
-        production or injection method such as fountain, gas-lift, etc.
-    choke : float, optional
-        Choke size (units as per project convention).
-    orate : float, default 0.0
-        Oil rate (e.g., STB/day).
-    wrate : float, default 0.0
-        Water rate (e.g., STB/day).
-    grate : float, default 0.0
-        Gas rate (e.g., MSCF/day).
 
     Notes
     -----
@@ -51,6 +25,14 @@ class Rate:
     editing, a per-instance `_unit_override` dictionary is provided. This lets
     you override the default unit label for a given field without altering the
     class definition.
+    - Class-level `metadata` is a read-only `mappingproxy` and cannot be
+      mutated in place.
+    - Use `set_unit` to attach runtime overrides; these are stored in
+      `_unit_override` and shadow the defaults.
+    - This design separates *schema information* (immutable) from
+      *instance-specific labeling* (mutable).
+    - For strict unit handling and conversions, consider `pint.Quantity`
+      or `typing.Annotated` instead.
 
     Usage
     -----
@@ -70,37 +52,61 @@ class Rate:
     >>> r.get_unit("orate")
     'm3/d'
 
-    Notes
-    -----
-    - Class-level `metadata` is a read-only `mappingproxy` and cannot be
-      mutated in place.
-    - Use `set_unit` to attach runtime overrides; these are stored in
-      `_unit_override` and shadow the defaults.
-    - This design separates *schema information* (immutable) from
-      *instance-specific labeling* (mutable).
-    - For strict unit handling and conversions, consider `pint.Quantity`
-      or `typing.Annotated` instead.
-
     """
-    well: str
+    well: str = dcfield(default="W1", metadata={
+        "head" : "Well Identifier",
+        "descr": "Well identifier"
+        })
 
-    date: datetime.date
+    date: datetime.date = dcfield(default_factory=datetime.date.today,metadata={
+        "head": "Date",
+        "descr": "Calendar date of record"
+        })
 
-    days: Optional[int] = 0
+    days: Optional[int] = dcfield(default=0, metadata={
+        "head": "Days",
+        "descr": "Number of contributing days in the period (≥ 0); use 0 to mark shut-in."
+        })
 
-    formation: Optional[str] = None
+    formation: Optional[str] = dcfield(default=None, metadata={
+        "head": "Formation",
+        "descr": "Horizon/completion name associated with the rate."
+        })
 
-    otype: Literal["production", "injection"] = "production"
+    otype: Literal["production", "injection"] = dcfield(default="production", metadata={
+        "head": "Operation Type",
+        "descr": "Indicates flow direction: 'production' (outflow) or 'injection' (inflow)."
+        })
 
-    method: Optional[str] = None
+    method: Optional[str] = dcfield(default=None, metadata={
+        "head": "Method",
+        "descr": "Production or injection method such as fountain, gas-lift, etc."
+        })
 
-    choke: Optional[float] = None
+    choke: Optional[float] = dcfield(default=None, metadata={
+        "head": "Choke Size",
+        "descr": "Choke size"
+        })
 
-    orate: float = field(default=0., metadata={"unit": "STB/d"})
-    wrate: float = field(default=0., metadata={"unit": "STB/d"})
-    grate: float = field(default=0., metadata={"unit": "MSCF/d"})
+    orate: Optional[float] = dcfield(default=0., metadata={
+        "head": "Oil Rate",
+        "unit": "STB/d",
+        "descr": "Oil production rate, mass or volumetric"
+        })
 
-    _unit_override: Dict[str, str] = field(default_factory=dict, init=False, repr=False)
+    wrate: Optional[float] = dcfield(default=0., metadata={
+        "head": "Water Rate",
+        "unit": "STB/d",
+        "descr": "Water production rate, mass or volumetric"
+        })
+
+    grate: Optional[float] = dcfield(default=0., metadata={
+        "head": "Gas Rate",
+        "unit": "MSCF/d",
+        "descr": "Gas production rate, mass or volumetric"
+        })
+
+    _unit_override: Dict[str, str] = dcfield(default_factory=dict, init=False, repr=False)
 
     def __post_init__(self) -> None:
         # --- basic requireds
@@ -145,16 +151,76 @@ class Rate:
                 raise AttributeError(f"No field named {key!r}")
             self._unit_override[key] = unit
 
-    @property
-    def lrate(self) -> float:
-        """Oil + water rate."""
-        return self.orate + self.wrate
+    def to_dict(self,metaonly:bool=False) -> Dict[str, Any]:
+        """Convert dataclass to dictionary with metadata included."""
+        data = {}
+        for f in dcfields(self):
+            if f.name.startswith("_"):   # skip private fields
+                continue
+            
+            value = getattr(self, f.name)
 
-    @property
-    def shutin(self) -> bool:
-        """True if no production/injection is recorded (all rates zero or days==0)."""
-        zero_rates = (self.orate == 0.0 and self.wrate == 0.0 and self.grate == 0.0)
-        return zero_rates or (self.days == 0)
+            if isinstance(value, (datetime.date, datetime.datetime)):
+                value = value.isoformat()   # <-- convert date to string
+
+            meta = dict(f.metadata)
+
+            if f.name in self._unit_override:
+                meta["unit"] = self._unit_override[f.name]
+
+            data[f.name] = {"metadata": meta} if metaonly else {"value": value,"metadata": meta}
+
+        return data
+
+    def to_json(self,filename:str,metaonly:bool=False) -> None:
+        """Dump the content to a JSON file."""
+        with open(filename, "w", encoding="utf-8") as f:
+            json.dump(self.to_dict(metaonly=metaonly), f, indent=4)
+
+    @classmethod
+    def from_dict(cls,data:Dict[str,Any],metaonly:bool=False) -> Self:
+        """Recreate an instance from a dict produced by to_dict().
+        Also re-applies unit overrides found in metadata['unit'] when they differ from defaults.
+        """
+        # prepare values
+        kw: Dict[str, Any] = {}
+
+        if not metaonly:
+
+            for f in dcfields(cls):
+                if f.name.startswith("_"):
+                    continue
+                if f.name not in data:
+                    continue
+                val = data[f.name]["value"]
+                # restore dates
+                if f.type is datetime.date and isinstance(val, str):
+                    val = datetime.date.fromisoformat(val)
+                elif f.type is datetime.datetime and isinstance(val, str):
+                    val = datetime.datetime.fromisoformat(val)
+                kw[f.name] = val
+
+        obj = cls(**kw)
+
+        # re-apply unit overrides if JSON’s unit differs from class default
+        for f in dcfields(cls):
+            if f.name.startswith("_"):
+                continue
+            if f.name not in data:
+                continue
+            json_unit = (data[f.name].get("metadata") or {}).get("unit")
+            default_unit = f.metadata.get("unit")
+            if json_unit and json_unit != default_unit:
+                obj._unit_override[f.name] = json_unit
+
+        return obj
+
+    @classmethod
+    def from_json(cls,filename:str,metaonly:bool=False) -> Self:
+        with open(filename, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        
+        return cls.from_dict(data,metaonly=metaonly)
 
     @staticmethod
     def fields() -> list[str]:
