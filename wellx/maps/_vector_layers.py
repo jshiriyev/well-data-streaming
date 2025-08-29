@@ -118,6 +118,8 @@ def wells(
 	*,
 	label_layer:Optional[folium.FeatureGroup]=None,
 	head_layer:Optional[folium.FeatureGroup]=None,
+	label_pane="overlayPane",
+	head_pane="overlayPane",
 	popup_formatter: Optional[str]=None
 	)-> Tuple[List[folium.CircleMarker], List[folium.Marker]]:
 	"""
@@ -159,6 +161,7 @@ def wells(
 			radius=5,
 			weight=0,
 			color=r.color,
+			pane=head_pane,
 			fill=True,
 			fill_opacity=r.fill_opacity
 		).add_child(folium.Popup(_fmt_popup(r),max_width=250))
@@ -171,6 +174,7 @@ def wells(
 		label = folium.Marker(
 			[r.lat, r.lon],
 			title=r.well,
+			pane=label_pane,
 			icon=DivIcon(
 				icon_size=(1,1),	  # minimal; we position via CSS
 				icon_anchor=(0,0),

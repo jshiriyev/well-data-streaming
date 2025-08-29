@@ -273,7 +273,7 @@ class Well:
                     raise ValueError(f"Top MD {md} outside survey range [{md_min}, {md_max}].")
 
     @staticmethod
-    def label(locs:pd.DataFrame,rates:pd.DataFrame,formation:str) -> pd.DataFrame:
+    def label(locs:pd.DataFrame,rates:pd.DataFrame,formation:str,field:str) -> pd.DataFrame:
         """
         Merge latest rates into wells and label wells by current status w.r.t. a given formation.
 
@@ -319,26 +319,27 @@ class Well:
         has_positive_rate = (out[["orate", "wrate", "grate"]] > 0).any(axis=1)
 
         is_prod = out["otype"].eq("production")
-        is_inj  = out["otype"].eq("injection")
+        is_winj = out["otype"].eq("injection")
 
         is_current = out["date"].eq(latest_available_date)
-        is_historic = out["date"].ne(latest_available_date)
+        is_offline = out["date"].ne(latest_available_date)
 
         # Classification logic
         conds = [
-            is_prod & has_positive_rate & out["formation_rate"].eq(formation) & is_current,  # producing from target formation
-            is_prod & has_positive_rate & out["formation_rate"].ne(formation) & is_current,  # producing from other formation
-            (
-                # inactive producers OR locs with no rate row at all
-                is_historic | out["otype"].isna()
-            ),
-            is_inj & has_positive_rate & out["formation_rate"].eq(formation),   # injecting into target formation
+            out["field"].eq(field) & is_prod & has_positive_rate & out["formation_rate"].eq(formation) & is_current,  # producing from target formation
+            out["field"].eq(field) & is_prod & has_positive_rate & out["formation_rate"].ne(formation) & is_current,  # producing from other formation
+            out["field"].eq(field) & is_winj & has_positive_rate & out["formation_rate"].eq(formation) & is_current,  # injecting into target formation
+            out["field"].eq(field) & is_winj & has_positive_rate & out["formation_rate"].ne(formation) & is_current,  # injecting into target formation
+            out["field"].eq(field) & is_offline,
+            out["field"].ne(field)
         ]
         choices = [
-            "producer@formation",
-            "producer@other",
-            "inactive",
-            "injector@formation", 
+            "producer@field@formation",
+            "producer@field@other",
+            "injector@field@formation",
+            "injector@field@other",
+            "inactive@field",
+            "all@other"
         ]
         out["label"] = np.select(conds, choices, default="other")
 
