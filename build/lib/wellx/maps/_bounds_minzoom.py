@@ -1,7 +1,7 @@
 from branca.element import MacroElement
 from jinja2 import Template
 
-class SetBoundsAndMinZoom(MacroElement):
+class SceneLock(MacroElement):
 	"""
 	A Folium/Leaflet helper to restrict map interactions to a given bounding box.
 
@@ -18,7 +18,7 @@ class SetBoundsAndMinZoom(MacroElement):
 
 		Example:
 		>>> bounds = ((40.0, -75.0), (42.0, -73.0))
-		>>> m.get_root().add_child(SetBoundsAndMinZoom(bounds))
+		>>> m.get_root().add_child(SceneLock(bounds))
 
 	Notes
 	-----
@@ -55,7 +55,7 @@ class SetBoundsAndMinZoom(MacroElement):
 
 	def __init__(self, bounds:tuple):
 		"""
-		Initialize the SetBoundsAndMinZoom macro.
+		Initialize the SceneLock macro.
 
 		Parameters
 		----------
@@ -65,6 +65,6 @@ class SetBoundsAndMinZoom(MacroElement):
 		"""
 		super().__init__()
 
-		self._name = "SetBoundsAndMinZoom"
+		self._name = "SceneLock"
 
 		(self.south, self.west), (self.north, self.east) = bounds

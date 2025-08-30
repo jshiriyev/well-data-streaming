@@ -117,32 +117,32 @@ def wells(
 	frame:pd.DataFrame,
 	*,
 	label_layer:Optional[folium.FeatureGroup]=None,
-	head_layer:Optional[folium.FeatureGroup]=None,
+	point_layer:Optional[folium.FeatureGroup]=None,
 	label_pane="overlayPane",
-	head_pane="overlayPane",
+	point_pane="overlayPane",
 	popup_formatter: Optional[str]=None
 	)-> Tuple[List[folium.CircleMarker], List[folium.Marker]]:
 	"""
-	Add well heads (CircleMarker) and optional text labels (DivIcon) for each row.
+	Add well points (CircleMarker) and optional text labels (DivIcon) for each row.
 
 	This function:
 	  - Reads lat/lon and style columns from `frame`.
 	  - Creates a CircleMarker per well and (optionally) a text label Marker.
-	  - Adds heads to `head_layer` and labels to `label_layer` (if provided).
+	  - Adds points to `point_layer` and labels to `label_layer` (if provided).
 
 	Parameters
 	----------
 	frame : pd.DataFrame
 		Table containing at least latitude/longitude columns.
-	head_layer : folium.FeatureGroup, optional
+	point_layer : folium.FeatureGroup, optional
 		Group to receive CircleMarkers (e.g., your “Wells” group).
 	label_layer : folium.FeatureGroup, optional
-		Group to receive text labels (can be a FeatureGroupSubGroup of `head_layer`).
+		Group to receive text labels (can be a FeatureGroupSubGroup of `point_layer`).
 	popup_formatter : Callable[[pd.Series], str], optional
         Builds popup HTML from the row; default shows “Name<br/>(lat, lon)”.
 
 	"""
-	heads: List[folium.CircleMarker] = []
+	points: List[folium.CircleMarker] = []
 	labels: List[folium.Marker] = []
 
 	def _fmt_popup(r:pd.Series):
@@ -156,19 +156,19 @@ def wells(
 
 	for r in frame.itertuples(index=False):
 
-		head = folium.CircleMarker(
+		point = folium.CircleMarker(
 			location=[r.lat, r.lon],
 			radius=5,
 			weight=0,
 			color=r.color,
-			pane=head_pane,
+			pane=point_pane,
 			fill=True,
 			fill_opacity=r.fill_opacity
 		).add_child(folium.Popup(_fmt_popup(r),max_width=250))
 
-		if head_layer is not None: head.add_to(head_layer)
+		if point_layer is not None: point.add_to(point_layer)
 
-		heads.append(head)
+		points.append(point)
 
 		# add a text label
 		label = folium.Marker(
@@ -188,4 +188,44 @@ def wells(
 
 		labels.append(label)
 
-	return heads, labels
+	return points, labels
+
+def well_search(
+	frame:pd.DataFrame,
+	*,
+	layer:Optional[folium.FeatureGroup]=None,
+	pane="overlayPane",
+	icon_class_name="leaflet-div-icon",
+	**kwargs
+	)-> Tuple[List[folium.CircleMarker], List[folium.Marker]]:
+	"""
+	Parameters
+	----------
+	frame : pd.DataFrame
+		Table containing at least latitude/longitude columns.
+	layer : folium.FeatureGroup, optional
+		Group to receive Markers (e.g., your “Wells” group).
+
+	"""
+	labels: List[folium.Marker] = []
+
+	for r in frame.itertuples(index=False):
+
+		label = folium.Marker(
+			[r.lat, r.lon],
+			pane=pane,
+			title=r.well,
+			icon=DivIcon(
+				icon_size=(1,1),	  # minimal; we position via CSS
+				icon_anchor=(0,0),
+				html="",
+				class_name=icon_class_name,
+			),
+			**kwargs
+		)
+
+		if layer is not None: label.add_to(layer)
+
+		labels.append(label)
+
+	return labels

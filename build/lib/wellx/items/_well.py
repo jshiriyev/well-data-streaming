@@ -273,65 +273,48 @@ class Well:
                     raise ValueError(f"Top MD {md} outside survey range [{md_min}, {md_max}].")
 
     @staticmethod
-    def label(locs:pd.DataFrame,rates:pd.DataFrame,formation:str,field:str) -> pd.DataFrame:
+    def label(frame:pd.DataFrame,formation:str,field:str,current_date=None) -> pd.DataFrame:
         """
-        Merge latest rates into wells and label wells by current status w.r.t. a given formation.
 
         Parameters
         ----------
-        locs : pd.DataFrame
+        frame : pd.DataFrame
             Columns: ["well", "field", "formation", ...].
-        rates : pd.DataFrame
-            Columns: ["well", "date", "otype", ...].
-            'date' may be datetime or string; will be coerced to datetime.
         formation : str
             Target formation to classify against (e.g., "FLD").
+        field : str
 
         Returns
         -------
         pd.DataFrame
-            Left-joined frame with all locs, the most recent
-            rates row per well, and a new 'label' column with values:
-                - "producer@formation"   : currently producing from the given formation
-                - "producer@other"       : currently producing, but from a different formation
-                - "inactive"             : not currently producing anywhere (incl. no rates)
-                - "injector@formation"   : currently injecting into the given formation
-                - "other"                : anything else (e.g., injector into other formation, unknown)
+            Frame with a new 'label' column with values:
+            - "producer@formation"   : currently producing from the given formation
+            - "producer@other"       : currently producing, but from a different formation
+            - "inactive"             : not currently producing anywhere (incl. no rates)
+            - "injector@formation"   : currently injecting into the given formation
+            - "other"                : anything else (e.g., injector into other formation, unknown)
 
         """
-        latest_available_date = rates.date.iloc[-1]
-
-        # Sort -> take the last row per well after sorting by date then otype priority
-        rates_latest = (
-            rates
-            .sort_values(["well", "date", "otype"], ascending=[True, True, True])
-            .groupby("well", as_index=False, sort=False)
-            .tail(1)
-        )
-
-        # Merge (left) onto locs
-        out = locs.merge(rates_latest, on="well", how="left", suffixes=("", "_rate"))
-
         # Define activity flags (treat >0 as "active"; adjust if you prefer >= or use 'days')
         for col in ["orate", "wrate", "grate"]:
-            if col not in out:
-                out[col] = 0.0
-        has_positive_rate = (out[["orate", "wrate", "grate"]] > 0).any(axis=1)
+            if col not in frame:
+                frame[col] = 0.0
+        has_positive_rate = (frame[["orate", "wrate", "grate"]] > 0).any(axis=1)
 
-        is_prod = out["otype"].eq("production")
-        is_winj = out["otype"].eq("injection")
+        is_prod = frame["otype"].eq("production")
+        is_winj = frame["otype"].eq("injection")
 
-        is_current = out["date"].eq(latest_available_date)
-        is_offline = out["date"].ne(latest_available_date)
+        is_current = frame["date"].eq(current_date)
+        is_offline = frame["date"].ne(current_date)
 
         # Classification logic
         conds = [
-            out["field"].eq(field) & is_prod & has_positive_rate & out["formation_rate"].eq(formation) & is_current,  # producing from target formation
-            out["field"].eq(field) & is_prod & has_positive_rate & out["formation_rate"].ne(formation) & is_current,  # producing from other formation
-            out["field"].eq(field) & is_winj & has_positive_rate & out["formation_rate"].eq(formation) & is_current,  # injecting into target formation
-            out["field"].eq(field) & is_winj & has_positive_rate & out["formation_rate"].ne(formation) & is_current,  # injecting into target formation
-            out["field"].eq(field) & is_offline,
-            out["field"].ne(field)
+            frame["field"].eq(field) & is_prod & has_positive_rate & frame["formation_rate"].eq(formation) & is_current,  # producing from target formation
+            frame["field"].eq(field) & is_prod & has_positive_rate & frame["formation_rate"].ne(formation) & is_current,  # producing from other formation
+            frame["field"].eq(field) & is_winj & has_positive_rate & frame["formation_rate"].eq(formation) & is_current,  # injecting into target formation
+            frame["field"].eq(field) & is_winj & has_positive_rate & frame["formation_rate"].ne(formation) & is_current,  # injecting into target formation
+            frame["field"].eq(field) & is_offline,
+            frame["field"].ne(field)
         ]
         choices = [
             "producer@field@formation",
@@ -341,6 +324,6 @@ class Well:
             "inactive@field",
             "all@other"
         ]
-        out["label"] = np.select(conds, choices, default="other")
+        frame["label"] = np.select(conds, choices, default="other")
 
-        return out
+        return frame

@@ -1,7 +1,7 @@
 from branca.element import MacroElement
 from jinja2 import Template
 
-class ToggleLabelsOnZoom(MacroElement):
+class ZoomToggle(MacroElement):
 	"""
 	Conditionally show or hide a label layer in a Folium/Leaflet map based on zoom level.
 
@@ -24,14 +24,14 @@ class ToggleLabelsOnZoom(MacroElement):
 	Example
 	-------
 	>>> import folium
-	>>> from wellx.maps import ToggleLabelsOnZoom
+	>>> from wellx.maps import ZoomToggle
 	>>>
 	>>> m = folium.Map(location=[40, -74], zoom_start=12)
 	>>> labels = folium.FeatureGroup(name="Labels").add_to(m)
 	>>> folium.Marker([40, -74], tooltip="Hello").add_to(labels)
 	>>>
 	>>> # Labels only appear at zoom >= 15
-	>>> m.get_root().add_child(ToggleLabelsOnZoom(labels, min_zoom=15))
+	>>> m.get_root().add_child(ZoomToggle(labels, min_zoom=15))
 	>>> m.save("map_with_toggle_labels.html")
 
 	Notes
@@ -82,7 +82,7 @@ class ToggleLabelsOnZoom(MacroElement):
 
 	def __init__(self, layer, parent_layer=None, min_zoom=16):
 		"""
-		Initialize the ToggleLabelsOnZoom macro.
+		Initialize the ZoomToggle macro.
 
 		Parameters
 		----------
