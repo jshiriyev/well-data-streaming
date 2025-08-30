@@ -88,6 +88,11 @@ class Rate:
         "descr": "Choke size"
         })
 
+    fluid: Optional[float] = dcfield(default=None, metadata={
+        "head": "Fluid Type",
+        "descr": "Main fluid type flowing in/out"
+        })
+
     orate: Optional[float] = dcfield(default=0., metadata={
         "head": "Oil Rate",
         "unit": "STB/d",
