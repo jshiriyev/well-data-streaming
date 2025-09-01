@@ -45,6 +45,11 @@ wellx/maps/_label_toggle.py
 wellx/maps/_layer_control.py
 wellx/maps/_recenter.py
 wellx/maps/_vector_layers.py
+wellx/maps/smoothing/__init__.py
+wellx/maps/smoothing/_bspline.py
+wellx/maps/smoothing/_chaikin.py
+wellx/maps/smoothing/_gaussian.py
+wellx/maps/smoothing/_savgol.py
 wellx/pipes/__init__.py
 wellx/pipes/_database.py
 wellx/pipes/_schedule.py
