@@ -18,4 +18,6 @@ from ._schematic import schematic
 
 from ._rates import Rate, RateTable
 
+from ._platform import Platform
+
 from ._well import Well

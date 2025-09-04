@@ -1,9 +1,11 @@
+from . import layers
 from . import smoothing
 
-from ._vector_layers import platform, wells, well_search
+from .layers import contours,faults,platform, wells
 
 from . import _icons as icons
 
+from ._zoom_control import ZoomControl
 from ._halo_hover import HaloHover
 from ._zoom_toggle import ZoomToggle
 from ._recenter import ReCenter

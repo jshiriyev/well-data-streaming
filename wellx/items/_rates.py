@@ -53,7 +53,7 @@ class Rate:
     'm3/d'
 
     """
-    well: str = dcfield(default="W1", metadata={
+    well: Optional[str] = dcfield(default="W", metadata={
         "head" : "Well Identifier",
         "descr": "Well identifier"
         })
