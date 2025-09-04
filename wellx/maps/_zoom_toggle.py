@@ -15,8 +15,8 @@ class ZoomToggle(MacroElement):
 	layer : folium.Layer or folium.FeatureGroup
 		The layer containing labels or markers to toggle on zoom.
 	parent_layer : folium.Layer or folium.FeatureGroup, optional
-        The *visible* parent group (e.g., wells/markers). If provided, labels show
-        only when this parent is visible in LayerControl.
+    The *visible* parent group (e.g., wells/markers). If provided, labels show
+    only when this parent is visible in LayerControl.
 	min_zoom : int, optional (default=16)
 		The minimum zoom level at which the labels should become visible.
 		Below this zoom, the labels are hidden.

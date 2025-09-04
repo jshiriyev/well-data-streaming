@@ -1,7 +1,7 @@
 from branca.element import MacroElement
 from jinja2 import Template
 
-class HoverHalo(MacroElement):
+class HaloHover(MacroElement):
     """
     Adds a hover "halo" effect to CircleMarker layers in a Folium/Leaflet map.
 
