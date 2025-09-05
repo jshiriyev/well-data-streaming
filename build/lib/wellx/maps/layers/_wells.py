@@ -1,124 +1,178 @@
-from typing import Optional, List, Tuple
+from __future__ import annotations
+
+from typing import Optional, List, Tuple, Any, Dict
+import html
+import math
 
 import folium
-
 from folium.features import DivIcon
-
 import pandas as pd
 
+
 def wells(
-	frame:pd.DataFrame,
-	*,
-	label_group:Optional[folium.FeatureGroup]=None,
-	point_group:Optional[folium.FeatureGroup]=None,
-	label_pane:Optional[str]="overlayPane",
-	point_pane:Optional[str]="overlayPane",
-	popup_formatter: Optional[str]=None
-	)-> Tuple[List[folium.CircleMarker], List[folium.Marker]]:
-	"""
-	Add well points (CircleMarker) and optional text labels (DivIcon) for each row.
+    frame: pd.DataFrame,
+    *,
+    label_group: Optional[folium.FeatureGroup] = None,
+    point_group: Optional[folium.FeatureGroup] = None,
+    label_pane: str = "overlayPane",
+    point_pane: str = "overlayPane",
+    units: Optional[Dict[str, str]] = None,
+) -> Tuple[List[folium.CircleMarker], List[folium.Marker]]:
+    """
+    Add well points (CircleMarker) and text labels (DivIcon) for each row of a fixed-schema DataFrame.
 
-	This function:
-	  - Reads lat/lon and style columns from `frame`.
-	  - Creates a CircleMarker per well and (optionally) a text label Marker.
-	  - Adds points to `point_group` and labels to `label_group` (if provided).
+    Expected DataFrame columns (fixed; no *_col parameters):
+        - well : str                         (name/identifier)
+        - date : datetime64/str/None         (last operation date)
+        - field : str
+        - formation : str
+        - cum_oil : float
+        - cum_water : float
+        - cum_gas : float
+        - lat : float                        (WGS84 latitude)
+        - lon : float                        (WGS84 longitude)
+        - color : str                        (CSS color for point stroke/fill)
+        - fill_opacity : float               (0..1)
+        - radius : float                     (point radius, optional; if missing, defaults to 5)
 
-	Parameters
-	----------
-	frame : pd.DataFrame
-		Table containing at least latitude/longitude columns.
-	point_group : folium.FeatureGroup, optional
-		Group to receive CircleMarkers (e.g., your “Wells” group).
-	label_group : folium.FeatureGroup, optional
-		Group to receive text labels (can be a FeatureGroupSubGroup of `point_group`).
-	popup_formatter : Callable[[pd.Series], str], optional
-        Builds popup HTML from the row; default shows “Name<br/>(lat, lon)”.
+    What it does
+    ------------
+    - Creates a `folium.CircleMarker` for each valid row (finite lat/lon).
+    - Builds a **safe** HTML popup per your template:
+        <b>{well}</b><br/>
+        Last Operation Date: {date_dd-mm-YYYY or 'N/A'}<br/>
+        Field-Formation: {field}-{formation}<br/>
+        Cum. Oil: {cum_oil:.1f} {units['cum_oil']}<br/>
+        Cum. Water: {cum_water:.1f} {units['cum_water']}<br/>
+        Cum. Gas: {cum_gas:.1f} {units['cum_gas']}<br/>
+      All values are HTML-escaped; missing/NaN handled gracefully.
+    - Adds a text label (DivIcon) with the well name at the same coordinate.
+    - Adds points to `point_group` and labels to `label_group` if provided.
+    - Returns the list of point markers and label markers.
 
-	"""
-	points: List[folium.CircleMarker] = []
-	labels: List[folium.Marker] = []
+    Parameters
+    ----------
+    frame : pd.DataFrame
+        Table with the fixed columns described above.
+    label_group, point_group : folium.FeatureGroup, optional
+        Target groups to attach the created markers. If omitted, layers are returned unattached.
+    label_pane, point_pane : str
+        Leaflet pane names for z-ordering.
+    units : dict, optional
+        Units to append in the popup for cumulative metrics, e.g.
+        {"cum_oil": " bbl", "cum_water": " bbl", "cum_gas": " m³"}.
+        Missing keys default to "" (no unit).
 
-	def _fmt_popup(r:pd.Series):
+    Returns
+    -------
+    (points, labels) : Tuple[List[folium.CircleMarker], List[folium.Marker]]
+        The created point markers and label markers.
+    """
 
-		if popup_formatter is not None:
-			return popup_formatter(r)
+    units = dict(units or {})
 
-		name = r.well if isinstance(r.well, str) else "Well"
-		
-		return f"{name}<br/>({r.lat:.6f}, {r.lon:.6f})"
+    def _is_nan(v: Any) -> bool:
+        return v is None or (isinstance(v, float) and math.isnan(v))
 
-	for r in frame.itertuples(index=False):
+    def _safe_text(v: Any) -> str:
+        return "" if _is_nan(v) else html.escape(str(v), quote=True)
 
-		point = folium.CircleMarker(
-			location=[r.lat, r.lon],
-			radius=5,
-			weight=0,
-			color=r.color,
-			pane=point_pane,
-			fill=True,
-			fill_opacity=r.fill_opacity
-		).add_child(folium.Popup(_fmt_popup(r),max_width=250))
+    def _fmt_date(v: Any) -> str:
+        if pd.isna(v):
+            return "N/A"
+        # datetime-like: prefer strftime
+        try:
+            if hasattr(v, "strftime"):
+                return html.escape(v.strftime("%d-%m-%Y"), quote=True)
+        except Exception:
+            pass
+        # fallback: stringify and escape
+        s = str(v).strip()
+        return html.escape(s, quote=True) if s else "N/A"
 
-		if point_group is not None: point.add_to(point_group)
+    def _fmt_num(v: Any) -> str:
+        """Format numeric value as 'x.x' or '' if missing/NaN/not a number."""
+        if _is_nan(v):
+            return ""
+        try:
+            return f"{float(v):.1f}"
+        except Exception:
+            return ""
 
-		points.append(point)
+    def _unit(key: str) -> str:
+        # ensure the unit text itself is escaped (paranoia)
+        return html.escape(units.get(key, "") or "", quote=True)
 
-		# add a text label
-		label = folium.Marker(
-			[r.lat, r.lon],
-			title=r.well,
-			pane=label_pane,
-			icon=DivIcon(
-				icon_size=(1,1),	  # minimal; we position via CSS
-				icon_anchor=(0,0),
-				html=f"""
-				<div class="well-label-div">{(r.well or "")}</div>
-				"""
-			)
-		)
+    points: List[folium.CircleMarker] = []
+    labels: List[folium.Marker] = []
 
-		if label_group is not None: label.add_to(label_group)
+    # iterate rows using itertuples for speed while keeping attribute access
+    for r in frame.itertuples(index=False):
+        lat = getattr(r, "lat", None)
+        lon = getattr(r, "lon", None)
+        if _is_nan(lat) or _is_nan(lon):
+            continue
 
-		labels.append(label)
+        # Safe building blocks
+        well = _safe_text(getattr(r, "well", ""))
+        date_html = _fmt_date(getattr(r, "date", None))
+        field_html = _safe_text(getattr(r, "field", ""))
+        formation_html = _safe_text(getattr(r, "formation", ""))
 
-	return points, labels
+        oil_val = _fmt_num(getattr(r, "cum_oil", None))
+        wtr_val = _fmt_num(getattr(r, "cum_water", None))
+        gas_val = _fmt_num(getattr(r, "cum_gas", None))
 
-def well_search(
-	frame:pd.DataFrame,
-	*,
-	layer:Optional[folium.FeatureGroup]=None,
-	pane="overlayPane",
-	icon_class_name="leaflet-div-icon",
-	**kwargs
-	)-> Tuple[List[folium.CircleMarker], List[folium.Marker]]:
-	"""
-	Parameters
-	----------
-	frame : pd.DataFrame
-		Table containing at least latitude/longitude columns.
-	layer : folium.FeatureGroup, optional
-		Group to receive Markers (e.g., your “Wells” group).
+        oil_unit = _unit("cum_oil")
+        wtr_unit = _unit("cum_water")
+        gas_unit = _unit("cum_gas")
 
-	"""
-	labels: List[folium.Marker] = []
+        # Assemble safe popup HTML (only show value+unit if value is non-empty)
+        popup_lines = [
+            f"<b>{well}</b><br/>",
+            f"Last Operation Date: {date_html}<br/>",
+            f"Field-Formation: {field_html}-{formation_html}<br/>",
+            f"Cum. Oil: {oil_val}{(' ' + oil_unit) if oil_val else ''}<br/>",
+            f"Cum. Water: {wtr_val}{(' ' + wtr_unit) if wtr_val else ''}<br/>",
+            f"Cum. Gas: {gas_val}{(' ' + gas_unit) if gas_val else ''}<br/>",
+        ]
+        popup_html = "".join(popup_lines)
 
-	for r in frame.itertuples(index=False):
+        # Marker styling with sensible fallbacks
+        color = getattr(r, "color", None)
+        fill_opacity = getattr(r, "fill_opacity", None)
+        radius = getattr(r, "radius", None)
 
-		label = folium.Marker(
-			[r.lat, r.lon],
-			pane=pane,
-			title=r.well,
-			icon=DivIcon(
-				icon_size=(1,1),	  # minimal; we position via CSS
-				icon_anchor=(0,0),
-				html="",
-				class_name=icon_class_name,
-			),
-			**kwargs
-		)
+        point = folium.CircleMarker(
+            location=[float(lat), float(lon)],
+            radius=(5 if _is_nan(radius) else float(radius)),
+            weight=0,
+            color=(color if isinstance(color, str) and color else "#3388ff"),
+            pane=point_pane,
+            fill=True,
+            fill_opacity=(0.85 if _is_nan(fill_opacity) else float(fill_opacity)),
+        ).add_child(
+            folium.Popup(popup_html, max_width=300)
+        )
 
-		if layer is not None: label.add_to(layer)
+        if point_group is not None:
+            point.add_to(point_group)
+        points.append(point)
 
-		labels.append(label)
+        # Text label (DivIcon) with safe content
+        label_html = f'<div class="well-label-div">{well}</div>'
+        label = folium.Marker(
+            [float(lat), float(lon)],
+            title=well,
+            pane=label_pane,
+            icon=DivIcon(
+                icon_size=(1, 1),
+                icon_anchor=(0, 0),
+                html=label_html,
+            ),
+        )
+        if label_group is not None:
+            label.add_to(label_group)
+        labels.append(label)
 
-	return labels
+    return points, labels

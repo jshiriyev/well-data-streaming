@@ -1,7 +1,7 @@
 import math
 
 import folium
-
+import pandas as pd
 from pyproj import Transformer
 
 # Reuse transformers (fast & thread-safe)
@@ -11,9 +11,9 @@ _FROM_WEB = Transformer.from_crs("EPSG:3857", "EPSG:4326", always_xy=True)
 def platform(
 	lat: float,
 	lon: float,
-	width_m: float = 40,
-	height_m: float = 18,
-	angle_deg: float = 45,
+	width_m: float = 120,
+	height_m: float = 80,
+	angle_deg: float = 0,
 	color: str = "#111",
 	weight: float = 2,
 	fill: bool = True,
@@ -107,3 +107,36 @@ def platform(
 	)
 
 	return poly
+
+def platforms(frame:pd.DataFrame,*,poly_group:folium.FeatureGroup=None,poly_pane:str="overlayPane",
+	length_unit:str=None,width_unit:str=None,sea_depth_unit:str=None):
+
+	polygons: List[folium.Polygon] = []
+
+	for plt in frame.itertuples():
+
+	    popup_html = (
+	        f"<b>Platform:</b> {plt.name}<br>"
+	        f"<b>Size:</b> {plt.length}{length_unit} × {plt.width}{width_unit}<br>"
+	        f"<b>Commencement Year:</b> {plt.commencement_year}<br>"
+	        f"<b>Sea Depth:</b> {plt.sea_depth}{sea_depth_unit}<br>"
+	        f"<b>Comments:</b> {plt.comment}"
+	    )
+
+	    poly = platform(plt.lat,plt.lon,
+	        width_m=120,
+	        height_m=80,
+	        angle_deg=plt.angle,
+	        fill_color="white",
+	        fill_opacity = 0,
+	        weight=2,
+	        pane=poly_pane,
+	    ).add_child(
+	        folium.Popup(popup_html,max_width=300)
+	    )
+
+	    if poly_group is not None: poly.add_to(poly_group)
+
+	    polygons.append(poly)
+
+	return polygons

@@ -49,7 +49,8 @@ wellx/maps/_zoom_toggle.py
 wellx/maps/layers/__init__.py
 wellx/maps/layers/_contours.py
 wellx/maps/layers/_faults.py
-wellx/maps/layers/_platform.py
+wellx/maps/layers/_image.py
+wellx/maps/layers/_platforms.py
 wellx/maps/layers/_wells.py
 wellx/maps/smoothing/__init__.py
 wellx/maps/smoothing/_bspline.py

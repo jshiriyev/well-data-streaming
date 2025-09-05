@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
 	name = 'wellx',
-	version = '0.0.31',
+	version = '0.0.36',
 	packages = find_packages(),
 	install_requires = [
 		'numpy>=1.26.4',

@@ -1,7 +1,7 @@
 from . import layers
 from . import smoothing
 
-from .layers import contours,faults,platform, wells
+from .layers import contours,faults,platforms,wells
 
 from . import _icons as icons
 
