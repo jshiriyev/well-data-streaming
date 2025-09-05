@@ -5,6 +5,7 @@ import math
 
 from typing import Any, Dict, List, Optional, Union, Callable
 
+from branca.element import Element
 import folium
 import pandas as pd
 from pyproj import Transformer
@@ -113,6 +114,22 @@ def platform(
 
 	return layer
 
+def _attach_css_once(target: Union[folium.Map, folium.FeatureGroup], css_text: str, key: str) -> None:
+    """Attach a <style>…</style> to the figure exactly once."""
+    if target is None:
+        return
+    fig = target.get_root()
+    if not hasattr(fig, "_custom_css_registry"):
+        fig._custom_css_registry = set()
+    if key in fig._custom_css_registry:
+        return
+    el = Element(f"<style>\n{css_text}\n</style>")
+    if hasattr(fig, "header"):
+        fig.header.add_child(el, name=key)
+    else:
+        fig.html.add_child(el, name=key)
+    fig._custom_css_registry.add(key)
+
 def platforms(
     frame: pd.DataFrame,
     *,
@@ -137,6 +154,9 @@ def platforms(
     tooltip_field: str = "name",  # used if tooltip_builder is None
     # Where to add
     group: Optional[Union[folium.Map, folium.FeatureGroup]] = None,
+    # CSS injection
+    add_css: bool = True,
+    css_text: Optional[str] = None,
 ) -> List[folium.Polygon]:
     """
     Create rotated rectangular platform polygons from a pandas DataFrame.
@@ -161,6 +181,10 @@ def platforms(
     - Popups are HTML-escaped; any missing/NaN becomes an empty string `""`.
     - You can customize polygon kwargs per-row via `style_fn(row_dict)->dict`.
     - Returns the list of created `folium.Polygon` objects; attaches them to `group` if provided.
+    - Optional tooltip from `tooltip_field` or a custom `tooltip_builder`.
+    - If `group` is provided and `add_css=True`, injects once:
+          .leaflet-container .leaflet-interactive:focus { outline: none; }
+      This prevents a focus ring from appearing on clicked SVG paths.
 
     Parameters
     ----------
@@ -187,6 +211,10 @@ def platforms(
         Field to display in the simple tooltip if `tooltip_builder` is None.
     group : folium.Map | folium.FeatureGroup, optional
         If provided, polygons are added to this map/group.
+    add_css : bool, default True
+        Whether to inject the CSS rule to remove focus outlines on SVG paths.
+    css_text : str, optional
+        Custom CSS to inject instead of the default.
 
     Returns
     -------
@@ -245,6 +273,14 @@ def platforms(
         if not rows:
             return ""
         return "<div><table style='font-size:12px;line-height:1.35'>" + "".join(rows) + "</table></div>"
+
+    # Inject CSS once if requested and we have a target group/map
+    if add_css and group is not None:
+        default_css = """
+/* Remove focus ring on clicked SVG paths */
+.leaflet-container .leaflet-interactive:focus { outline: none; }
+""".strip()
+        _attach_css_once(group, (css_text or default_css), key="platforms-focus-css")
 
     polys: List[folium.Polygon] = []
 

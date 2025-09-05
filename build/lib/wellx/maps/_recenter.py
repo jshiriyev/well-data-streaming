@@ -1,7 +1,7 @@
 from branca.element import MacroElement
 from jinja2 import Template
 
-class ReCenter(MacroElement):
+class Recenter(MacroElement):
 	"""
 	A custom Folium/Leaflet control to re-center the map to a predefined latitude,
 	longitude, and zoom level.
@@ -26,7 +26,7 @@ class ReCenter(MacroElement):
 	--------
 	>>> import folium
 	>>> m = folium.Map(location=[40.4093, 49.8671], zoom_start=10)
-	>>> m.add_child(ReCenter(lat=40.4093, lon=49.8671, zoom=10))
+	>>> m.add_child(Recenter(lat=40.4093, lon=49.8671, zoom=10))
 	>>> m.save("map_with_recenter.html")
 	
 	"""
@@ -83,7 +83,7 @@ class ReCenter(MacroElement):
 		Initialize the re-center control.
 		"""
 		super().__init__()
-		self._name = "ReCenter"
+		self._name = "Recenter"
 		self.lat = float(lat)
 		self.lon = float(lon)
 		self.zoom = int(zoom)

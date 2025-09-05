@@ -13,7 +13,7 @@ def faults(
     gdf_or_geojson: Union[gpd.GeoDataFrame, dict, str],
     *,
     name: str = "Faults",
-    add_to: Optional[Union[folium.Map, folium.FeatureGroup]] = None,
+    group: Optional[Union[folium.Map, folium.FeatureGroup]] = None,
     # Pane / LayerControl behavior
     pane: str = "overlayPane",
     control: bool = True,
@@ -49,7 +49,7 @@ def faults(
         is reprojected to EPSG:4326 for Leaflet.
     name : str, default "Faults"
         Layer name shown in LayerControl (if `control=True`).
-    add_to : folium.Map | folium.FeatureGroup, optional
+    group : folium.Map | folium.FeatureGroup, optional
         If provided, the layer is added to this map/group; otherwise it is returned unattached.
     pane : str, default "overlayPane"
         Leaflet pane for z-ordering relative to other layers.
@@ -85,7 +85,7 @@ def faults(
     Returns
     -------
     folium.GeoJson
-        The constructed GeoJson layer (already added to `add_to` if provided).
+        The constructed GeoJson layer (already added to `group` if provided).
 
     Examples
     --------
@@ -94,7 +94,7 @@ def faults(
     ...     name="Field Faults",
     ...     style={"color":"#333","weight":2,"opacity":0.6},
     ...     tooltip_fields=["fault"], tooltip_aliases=["Fault:"],
-    ...     add_to=m, show=True, smooth_factor=0.0
+    ...     group=m, show=True, smooth_factor=0.0
     ... )
     >>> folium.LayerControl().add_to(m)
     """
@@ -142,7 +142,7 @@ def faults(
         **geojson_kwargs,
     )
 
-    if add_to is not None:
-        layer.add_to(add_to)
+    if group is not None:
+        layer.add_to(group)
 
     return layer

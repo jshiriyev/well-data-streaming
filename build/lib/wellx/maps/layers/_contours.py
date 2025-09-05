@@ -116,6 +116,9 @@ def contours(
     tooltip_fields: Optional[Sequence[str]] = None,
     tooltip_aliases: Optional[Sequence[str]] = None,
     tooltip: Optional[folium.Tooltip] = None,
+    # Optional geometry simplification (server-side before serializing)
+    simplify_tolerance: Optional[float] = None,
+    simplify_preserve_topology: bool = True,
     # --- CSS injection for interactive layer ---
     add_css: bool = True,
     css_text: Optional[str] = None,
@@ -204,6 +207,11 @@ def contours(
         Class added to interactive paths (useful for CSS targeting).
     popup_fields, popup_aliases, popup, tooltip_fields, tooltip_aliases, tooltip :
         Popup/tooltip configuration (see description above).
+    simplify_tolerance : float, optional
+        If given (units of layer CRS / degrees if already 4326), geometries are
+        simplified on the server prior to serialization to reduce payload size.
+    simplify_preserve_topology : bool, default True
+        Preserve topology when simplifying (recommended for lines).
     add_css : bool, default True
         Inject a `<style>` block once to remove focus outlines for `interactive_class`.
         Only effective if `group` is provided.
@@ -261,6 +269,11 @@ def contours(
     if style_function is None and style is None:
         style = {"color": "black", "weight": 0.6, "opacity": 0.7}
 
+    # optional simplification before reprojection (cheaper in native CRS)
+    if simplify_tolerance is not None and not gdf.empty:
+        gdf = gdf.copy()
+        gdf["geometry"] = gdf.geometry.simplify(simplify_tolerance, preserve_topology=simplify_preserve_topology)
+
     display_layer = folium.GeoJson(
         data=gdf_filtered.__geo_interface__,
         name=(control_name or name or ""),
@@ -306,7 +319,7 @@ def contours(
             style_function=lambda f, _s=interactive_style: _s,
             popup=popup_obj,
             tooltip=tooltip_obj,
-            popup_keep_highlighted=True,
+            popup_keep_highlighted=False if popup_obj is None else True,
             **geojson_kwargs,
         )
 

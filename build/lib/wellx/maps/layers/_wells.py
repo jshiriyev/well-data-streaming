@@ -8,7 +8,6 @@ import folium
 from folium.features import DivIcon
 import pandas as pd
 
-
 def wells(
     frame: pd.DataFrame,
     *,
@@ -118,6 +117,7 @@ def wells(
         date_html = _fmt_date(getattr(r, "date", None))
         field_html = _safe_text(getattr(r, "field", ""))
         formation_html = _safe_text(getattr(r, "formation", ""))
+        platform_html = _safe_text(getattr(r, "platform", ""))
 
         oil_val = _fmt_num(getattr(r, "cum_oil", None))
         wtr_val = _fmt_num(getattr(r, "cum_water", None))
@@ -130,11 +130,11 @@ def wells(
         # Assemble safe popup HTML (only show value+unit if value is non-empty)
         popup_lines = [
             f"<b>{well}</b><br/>",
+            f"Field-Platform: {field_html}-{platform_html}<br/>",
             f"Last Operation Date: {date_html}<br/>",
-            f"Field-Formation: {field_html}-{formation_html}<br/>",
-            f"Cum. Oil: {oil_val}{(' ' + oil_unit) if oil_val else ''}<br/>",
-            f"Cum. Water: {wtr_val}{(' ' + wtr_unit) if wtr_val else ''}<br/>",
-            f"Cum. Gas: {gas_val}{(' ' + gas_unit) if gas_val else ''}<br/>",
+            f"{formation_html} Cum. Oil: {oil_val}{(' ' + oil_unit) if oil_val else ''}<br/>",
+            f"{formation_html} Cum. Water: {wtr_val}{(' ' + wtr_unit) if wtr_val else ''}<br/>",
+            f"{formation_html} Cum. Gas: {gas_val}{(' ' + gas_unit) if gas_val else ''}<br/>",
         ]
         popup_html = "".join(popup_lines)
 
@@ -155,6 +155,8 @@ def wells(
             folium.Popup(popup_html, max_width=300)
         )
 
+        point.options.update({"title": well})
+
         if point_group is not None:
             point.add_to(point_group)
         points.append(point)
@@ -163,7 +165,6 @@ def wells(
         label_html = f'<div class="well-label-div">{well}</div>'
         label = folium.Marker(
             [float(lat), float(lon)],
-            title=well,
             pane=label_pane,
             icon=DivIcon(
                 icon_size=(1, 1),
