@@ -25,9 +25,9 @@ def wells(
         - date : datetime64/str/None         (last operation date)
         - field : str
         - formation : str
-        - cum_oil : float
-        - cum_water : float
-        - cum_gas : float
+        - orate : float
+        - wrate : float
+        - grate : float
         - lat : float                        (WGS84 latitude)
         - lon : float                        (WGS84 longitude)
         - color : str                        (CSS color for point stroke/fill)
@@ -41,9 +41,9 @@ def wells(
         <b>{well}</b><br/>
         Last Operation Date: {date_dd-mm-YYYY or 'N/A'}<br/>
         Field-Formation: {field}-{formation}<br/>
-        Cum. Oil: {cum_oil:.1f} {units['cum_oil']}<br/>
-        Cum. Water: {cum_water:.1f} {units['cum_water']}<br/>
-        Cum. Gas: {cum_gas:.1f} {units['cum_gas']}<br/>
+        Cum. Oil: {orate:.1f} {units['orate']}<br/>
+        Cum. Water: {wrate:.1f} {units['wrate']}<br/>
+        Cum. Gas: {grate:.1f} {units['grate']}<br/>
       All values are HTML-escaped; missing/NaN handled gracefully.
     - Adds a text label (DivIcon) with the well name at the same coordinate.
     - Adds points to `point_group` and labels to `label_group` if provided.
@@ -59,7 +59,7 @@ def wells(
         Leaflet pane names for z-ordering.
     units : dict, optional
         Units to append in the popup for cumulative metrics, e.g.
-        {"cum_oil": " bbl", "cum_water": " bbl", "cum_gas": " m³"}.
+        {"orate": " bbl", "wrate": " bbl", "grate": " m³"}.
         Missing keys default to "" (no unit).
 
     Returns
@@ -119,27 +119,27 @@ def wells(
         formation_html = _safe_text(getattr(r, "formation", ""))
         platform_html = _safe_text(getattr(r, "platform", ""))
 
-        oil_val = _fmt_num(getattr(r, "cum_oil", None))
-        wtr_val = _fmt_num(getattr(r, "cum_water", None))
-        gas_val = _fmt_num(getattr(r, "cum_gas", None))
+        oil_val = _fmt_num(getattr(r, "orate", None))
+        wtr_val = _fmt_num(getattr(r, "wrate", None))
+        gas_val = _fmt_num(getattr(r, "grate", None))
 
-        oil_unit = _unit("cum_oil")
-        wtr_unit = _unit("cum_water")
-        gas_unit = _unit("cum_gas")
+        oil_unit = _unit("orate")
+        wtr_unit = _unit("wrate")
+        gas_unit = _unit("grate")
 
         # Assemble safe popup HTML (only show value+unit if value is non-empty)
         popup_lines = [
             f"<b>{well}</b><br/>",
             f"Field-Platform: {field_html}-{platform_html}<br/>",
-            f"Last Operation Date: {date_html}<br/>",
-            f"{formation_html} Cum. Oil: {oil_val}{(' ' + oil_unit) if oil_val else ''}<br/>",
-            f"{formation_html} Cum. Water: {wtr_val}{(' ' + wtr_unit) if wtr_val else ''}<br/>",
-            f"{formation_html} Cum. Gas: {gas_val}{(' ' + gas_unit) if gas_val else ''}<br/>",
+            f"Last Record Date: {date_html}<br/>",
+            f"{formation_html} Daily Oil Rate: {oil_val}{(' ' + oil_unit) if oil_val else ''}<br/>",
+            f"{formation_html} Daily Water Rate: {wtr_val}{(' ' + wtr_unit) if wtr_val else ''}<br/>",
+            f"{formation_html} Daily Gas Rate: {gas_val}{(' ' + gas_unit) if gas_val else ''}<br/>",
         ]
         popup_html = "".join(popup_lines)
 
         # Marker styling with sensible fallbacks
-        color = getattr(r, "color", None)
+        color = getattr(r, "color", "#22c55e")
         fill_opacity = getattr(r, "fill_opacity", None)
         radius = getattr(r, "radius", None)
 
@@ -147,7 +147,7 @@ def wells(
             location=[float(lat), float(lon)],
             radius=(5 if _is_nan(radius) else float(radius)),
             weight=0,
-            color=(color if isinstance(color, str) and color else "#3388ff"),
+            color=(color if isinstance(color, str) and color else "#22c55e"),
             pane=point_pane,
             fill=True,
             fill_opacity=(0.85 if _is_nan(fill_opacity) else float(fill_opacity)),
