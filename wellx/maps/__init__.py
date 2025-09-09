@@ -1,5 +1,5 @@
 from . import layers
-from . import smoothing
+from . import sidebars
 
 from . import _icons as icons
 
@@ -10,3 +10,5 @@ from ._recenter import Recenter
 from ._scene_lock import SceneLock
 
 from ._layer_control import LayerControl
+
+from ._time_stamped_geojson import TimeStampedGeojson
