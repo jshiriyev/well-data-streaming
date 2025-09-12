@@ -1,0 +1,3 @@
+class Intervens():
+
+	pass
