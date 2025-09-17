@@ -60,6 +60,7 @@ wellx/maps/layers/smoothing/_gaussian.py
 wellx/maps/layers/smoothing/_savgol.py
 wellx/maps/sidebars/__init__.py
 wellx/maps/sidebars/_attach_attrs.py
+wellx/maps/sidebars/_categorical_filter_sidebar.py
 wellx/maps/sidebars/_filter_sidebar.py
 wellx/maps/sidebars/_multi_filter.py
 wellx/pipes/__init__.py
