@@ -3,6 +3,16 @@ from enum import Enum
 from typing import Optional, Dict, Any
 from datetime import datetime, timezone, timedelta
 
+"""
+"prospect"
+"construction"
+"online"
+"maintenance"
+"suspended"
+"abandoned"
+
+"""
+
 class StatusCode(str, Enum):
     # Planning / construction
     PROSPECT       = "prospect"
