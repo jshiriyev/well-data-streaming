@@ -29,7 +29,6 @@ var __sidebar = L.control.sidebar('{{ this.container_id }}', {
 }).addTo({{ this._parent.get_name() }});
 {% if this.visible %}__sidebar.show();{% endif %}
 
-// 🔑 Add your custom hotkey handler here
 document.addEventListener('keydown', function(e) {
   if (e.shiftKey && (e.key === 'f' || e.key === 'F')) {
     __sidebar.toggle();
