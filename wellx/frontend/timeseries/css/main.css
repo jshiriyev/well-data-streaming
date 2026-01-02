@@ -1,0 +1,176 @@
+:root {
+  --sidebar-width: 360px;
+  --sidebar-min: 220px;
+  --sidebar-max: 520px;
+  --bg: #ffffff;
+  --tab-bg: #f3f4f6;
+  --border: rgba(0, 0, 0, .12);
+  --shadow: 0 10px 30px rgba(0, 0, 0, .15);
+  --radius: 4px;
+}
+* { box-sizing: border-box; }
+/* Demo background */
+html,
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background: linear-gradient(135deg, #eef2ff, #f8fafc);
+  color: #0f172a;
+  min-height: 100vh;
+  font-size: 62.5%;
+}
+
+.scene {
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 0px 1fr;
+  transition: grid-template-columns 220ms ease;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.scene.is-open {
+  grid-template-columns: var(--sidebar-width) 1fr;
+}
+
+/* ===== Sidebar layout ===== */
+aside {
+  grid-column: 1;
+  top: 0;
+  left: 0;
+  height: 100%;
+  position: relative;
+  width: var(--sidebar-width);
+  /* only inner parts clickable */
+  /* transform: translateX(-100%); */
+  transition: transform 220ms ease, opacity 0.5s ease;
+  will-change: transform;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  pointer-events: none;
+
+  padding: 10px;
+  overflow: auto;
+  /* overflow-x: auto; */
+  background: #fff;
+  scrollbar-gutter: stable;
+  z-index: 20;
+}
+
+aside.is-open {
+  transform: translateX(0);
+  pointer-events: auto;
+  opacity: 1;
+}
+
+.scene.is-open aside {
+  opacity: 1;
+  pointer-events: auto;
+  /* transform: translateX(0); */
+}
+
+/* Drag handle on the right edge of sidebar */
+.sidebar-resizer{
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 4px;
+  height: 100%;
+  cursor: col-resize;
+  user-select: none;
+  touch-action: none; /* important for pointer events on touch devices */
+}
+
+/* Optional: make handle easier to see on hover */
+.sidebar-resizer:hover{
+  background: rgba(0,0,0,0.06);
+}
+
+/* Main content area (demo placeholder) */
+.main {
+  grid-column: 2;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background: #fff;
+
+  /* transform: translateX(0); */
+  transition: transform 220ms ease;
+  will-change: transform;
+
+  flex: 1;
+  padding: 10px;
+  overflow: auto;
+}
+
+.main-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.main-toolbar .sidebar-toggle {
+  border: 1px solid var(--border);
+  background: #fff;
+  color: #0f172a;
+  padding: 6px 9px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: box-shadow 0.12s ease, transform 0.06s ease;
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+}
+
+.main-toolbar .sidebar-toggle span {
+  display: block;
+  height: 2px;
+  width: 18px;
+  background: #222;
+  border-radius: 2px;
+}
+
+.main-toolbar .sidebar-toggle:active {
+  transform: translateY(1px);
+}
+
+.main-toolbar .filter-pill {
+  margin-left: 0;
+  margin-bottom: 0;
+  height: 36px;
+}
+
+/* .scene.is-open main {
+  transform: translateX(var(--sidebar-width));
+} */
+
+/* Optional: on small screens, overlay instead of push */
+@media (max-width: 680px) {
+  :root {
+    --sidebar-width: 85vw;
+  }
+
+  .scene.is-open main {
+    /* comment this out if you still want push on mobile */
+    transform: translateX(var(--sidebar-width));
+  }
+}
+
+.card {
+  /* max-width: 900px; */
+  width: 100%-20px;
+  background: rgba(255, 255, 255, .75);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, .08);
+  backdrop-filter: blur(6px);
+}

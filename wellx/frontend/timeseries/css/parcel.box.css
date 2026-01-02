@@ -1,0 +1,483 @@
+.box {
+  background: white;
+  position: relative;
+  width: calc(100% - 20px);
+  height: 500px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  /* border-color: #ccc; */
+  border-style: solid;
+  border-width: 1px 1px 1px 1px;
+  border-radius: 5px;
+  padding: 10px 10px;
+  margin: 10px 10px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.box-bottom {
+  background: white;
+  position: relative;
+  width: calc(100% - 20px);
+  height: 500px;
+  box-sizing: border-box;
+  border-color: #ccc;
+  border-style: solid;
+  border-width: 1px 1px 1px 1px;
+  border-radius: 5px;
+  padding: 10px 10px;
+  margin: 10px 10px;
+  margin-top: auto;
+  font-size: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.box-bottom:hover {
+  background: #f7faff;
+  border-color: #4a90e2;
+  color: #4a90e2;
+}
+
+.box-header {
+  height: 22px;
+  display: inline-flex;
+  justify-content: space-between;
+  gap: 6px;
+  align-items: center;
+  margin: 10px;
+}
+
+.box-header .add-button {
+  /* position: absolute; */
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid #aaa;
+  background: #fff;
+  display: flex;
+  /* align-items: center; */
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 12;
+  pointer-events: auto;
+}
+
+/* show button when hovering near left side */
+.box:hover .add-button {
+  opacity: 0.85;
+}
+
+.series-picker {
+  background: white;
+  padding: 10px 10px;
+  border-radius: 8px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  font-size: 12px;
+  display: none;
+  z-index: 20;
+  pointer-events: auto;
+  cursor: move;
+  /* show grab cursor */
+  user-select: none;
+  /* prevent text selection while dragging */
+}
+
+.series-picker-choices {
+  margin: 15px 0;
+}
+
+.series-picker-choices label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  background: #f7f7f7;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.series-picker-choices label>*:last-child {
+  margin-left: auto;
+  /* Pushes this item to the far right */
+}
+
+.series-picker-choices label:hover {
+  background: #ececec;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.15);
+}
+
+.series-picker-choices input {
+  margin: 0;
+  /* remove browser default offset */
+  accent-color: #007bff;
+  /* stylish blue radio */
+  cursor: pointer;
+}
+
+.series-picker-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.series-picker-buttons button {
+  cursor: pointer;
+  padding: 6px 6px;
+}
+
+.box-header .name-pill {
+  display: inline-flex;
+  align-items: center;
+  margin: 4px 0px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #f5f5f5;
+  font-family: sans-serif;
+  font-size: 14px;
+}
+
+.box-header .name-pill .label {
+  margin-right: 6px;
+  max-width: 150px;
+  /* optional: visual truncation */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 2px 10px;
+}
+
+.box-header .name-pill button {
+  cursor: pointer;
+}
+
+.box-header .name-pill .close-btn {
+  border: 1px solid #aaa;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  width: 22px;
+  padding: 2px 0px;
+}
+
+.box-header .settings-circle {
+  margin-left: auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  transition: transform .08s ease, box-shadow .15s ease, border-color .15s ease;
+}
+
+.box:hover .settings-circle {
+  opacity: 0.85;
+}
+
+.box-header .settings-icon {
+  width: 16px;
+  height: 16px;
+  fill: rgba(0, 0, 0, 0.75);
+}
+
+.trace-styler {
+  width: 100%;
+  max-width: 400px;
+  display: none;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 12px 14px;
+  align-items: end;
+
+  padding: 12px 14px;
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+
+  font-size: 12px;
+  z-index: 20;
+  pointer-events: auto;
+  cursor: move;
+  /* show grab cursor */
+  user-select: none;
+  /* prevent text selection while dragging */
+  overflow-y: auto;
+}
+
+.trace-styler h2 {
+  margin-top: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.trace-styler .form-group {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+}
+
+.trace-styler .form-group select {
+  margin-top: 5px;
+}
+
+/* Each label becomes a neat “field” */
+.trace-styler>label {
+  display: block;
+  gap: 6px;
+  font: 500 12px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: rgba(0, 0, 0, 0.70);
+  padding: 8px 0px;
+  margin-bottom: 4px;
+}
+
+/* Give the Trace dropdown more room */
+.trace-styler>label:first-child {
+  flex: 1 1 240px;
+  min-width: 220px;
+}
+
+/* Other fields are compact */
+.trace-styler>label:not(:first-child) {
+  flex: 0 0 auto;
+}
+
+/* Inputs/selects (shared) */
+.trace-styler select,
+.trace-styler input[type="range"],
+.trace-styler input[type="color"] {
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: #fff;
+  padding: 0 10px;
+  outline: none;
+}
+
+/* Focus ring */
+.trace-styler select:focus,
+.trace-styler input[type="range"]:focus,
+.trace-styler input[type="color"]:focus {
+  border-color: rgba(59, 130, 246, 0.55);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.18);
+}
+
+/* Color picker - make it look like a button */
+.trace-styler input[type="color"] {
+  width: 100%;
+  height: 36px;
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: #fff;
+  cursor: pointer;
+}
+
+.trace-styler input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.trace-styler input[type="color"]::-webkit-color-swatch {
+  border: 0;
+  border-radius: 8px;
+}
+
+/* Width value chip */
+.trace-styler .form-group span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+  font: 600 12px/1 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 999px;
+}
+
+/* Make selects look consistent across browsers */
+.trace-styler select {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, rgba(0, 0, 0, 0.55) 50%),
+    linear-gradient(135deg, rgba(0, 0, 0, 0.55) 50%, transparent 50%);
+  background-position:
+    calc(100% - 16px) 15px,
+    calc(100% - 11px) 15px;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 30px;
+}
+
+.trace-styler .select-style-and-color {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 85% 15%;
+  align-items: center;
+}
+
+.select-style-and-color .form-group {
+  width: 100%;
+}
+
+.select-style-and-color label {
+  margin-bottom: 5px;
+}
+
+.select-style-and-color select {
+  margin-top: 0px !important;
+  margin-right: 10px;
+}
+
+.trace-styler .range-row {
+  display: grid;
+  grid-template-columns: 85% 15%;
+  align-items: center;
+}
+
+/* Label + slider in column 1 */
+.trace-styler .range-row label,
+.trace-styler .range-row input[type="range"] {
+  grid-column: 1;
+}
+
+.trace-styler .range-row input[type="range"] {
+  padding: 0;
+  margin-right: 10px;
+}
+
+/* Value span in column 2 */
+.trace-styler .range-row span {
+  grid-column: 2;
+  grid-row: 1 / span 2;   /* 🔑 span two rows */
+  align-self: center;    /* vertical centering */
+  text-align: right;
+  font-weight: 600;
+  font-size: 13px;
+  color: #333;
+}
+
+.trace-styler .range-mount {
+  width: 100%;
+}
+
+/* Checkbox */
+.checkbox-group {
+  display: flex;
+  flex-direction: row !important;
+  align-items: center;
+}
+
+.checkbox-group label {
+  margin-left: 6px;
+  font-weight: normal;
+}
+
+.trace-styler .marker-settings {
+  width: 100%;
+}
+
+/* Buttons */
+.trace-styler .button-row {
+  width: 100%;
+  display: flex;
+  gap: 10px;
+}
+
+.trace-styler button {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  background: #1f77b4;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.trace-styler button.secondary {
+  background: #aaa;
+}
+
+.trace-styler button:hover {
+  opacity: 0.9;
+}
+
+/* Small screens: stack nicely */
+@media (max-width: 620px) {
+  .trace-styler {
+    gap: 10px;
+  }
+
+  .trace-styler>label:first-child {
+    flex-basis: 100%;
+    min-width: 0;
+  }
+}
+
+.axis-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 44px;
+  bottom: 100px;
+}
+
+.axis-control-column {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 100%;
+  pointer-events: auto;
+  transform: translate(-50%, 0%);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.axis-control-column:hover {
+  opacity: 1;
+}
+
+.axis-control-column .icon {
+  width: 22px;
+  height: 22px;
+  border: 1px solid #aaa;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  z-index: 15;
+}
+
+.plot-display {
+  width: 100%;
+  flex: 1;
+}

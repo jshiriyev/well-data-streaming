@@ -1,0 +1,216 @@
+:root {
+    font-family: "Inter", "Segoe UI", Arial, sans-serif;
+    background: linear-gradient(180deg, #f8fafc, #eef2f7);
+    color: #0f172a;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    display: grid;
+    justify-items: center;
+    align-items: stretch;
+    min-height: 100vh;
+}
+
+/* Main container */
+.card {
+    /* width: min(1100px, 92vw); */
+    height: 100%;
+    padding: 40px 48px;
+    /* border-radius: 18px; */
+    /* background: #ffffff; */
+    /* border: 1px solid #e5e7eb; */
+    /* box-shadow:
+        0 20px 40px rgba(15, 23, 42, 0.08),
+        0 2px 6px rgba(15, 23, 42, 0.04); */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+.header {
+    margin-bottom: 32px;
+}
+
+h1 {
+    margin: 0 0 10px;
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+p {
+    margin: 0;
+    font-size: 15px;
+    color: #475569;
+}
+
+/* Grid launcher */
+.links {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-rows: 1fr;
+    gap: 22px;
+    min-height: 0;
+}
+
+/* Launcher boxes */
+.links a {
+    height: 240px;
+    text-decoration: none;
+    padding: 22px;
+    border-radius: 14px;
+    background: linear-gradient(
+        180deg,
+        #ffffff,
+        #f8fafc
+    );
+    border: 1px solid #e5e7eb;
+    color: #0f172a;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        border-color 0.18s ease;
+}
+
+.links a .tile-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.links a .tile-icon {
+    width: 22px;
+    height: 22px;
+    fill: #0f172a;
+    flex: 0 0 auto;
+}
+
+.links a .tile-map {
+    position: relative;
+    height: 110px;
+    border-radius: 10px;
+    background-color: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    background-image:
+        linear-gradient(to right, rgba(15, 23, 42, 0.06) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(15, 23, 42, 0.06) 1px, transparent 1px);
+    background-size: 18px 18px;
+}
+
+.links a .map-dot {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: #0f172a;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+}
+
+.links a .map-dot-a {
+    top: 18px;
+    left: 18px;
+}
+
+.links a .map-dot-b {
+    bottom: 16px;
+    right: 22px;
+}
+
+.links a .map-dot-c {
+    top: 50%;
+    left: 50%;
+    background: #00710f !important;
+}
+
+.links a .map-contours {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    height: 100%;
+    width: calc(100% - 24px);
+    opacity: 0.75;
+}
+
+.links a .map-contours path {
+    stroke: #94a3b8;
+    stroke-width: 1.4;
+    fill: none;
+    stroke-linecap: round;
+}
+
+.links a .timeseries {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    height: 100%;
+    width: calc(100% - 24px);
+    opacity: 0.75;
+}
+
+.links a .timeseries path { fill: none; stroke: #94a3b8; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.links a .timeseries .ts-fit { stroke: #3b82f6; stroke-width: 1; opacity: .5; }
+.links a .timeseries .ts-forecast { stroke-dasharray: 4 3; stroke-width: 1; opacity: .6; }
+.links a .timeseries rect, .links a .timeseries .pt { fill: currentColor; }
+
+.log-trails-icon path,
+.log-trails-icon rect {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.9;
+}
+
+/* Hover interaction */
+.links a:hover {
+    transform: translateY(-4px);
+    border-color: #c7d2fe;
+    box-shadow:
+        0 18px 30px rgba(15, 23, 42, 0.12),
+        0 4px 10px rgba(15, 23, 42, 0.06);
+}
+
+/* Title */
+.links span {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+/* Subtitle */
+.links small {
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+/* Responsive fallback */
+@media (max-width: 900px) {
+    .links {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 560px) {
+    .links {
+        grid-template-columns: 1fr;
+    }
+}

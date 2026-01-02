@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Production History</title>
+  <link rel="stylesheet" href="./css/main.css" />
+  <link rel="stylesheet" href="./css/sidebar.css" />
+  <link rel="stylesheet" href="./css/filter.css" />
+  <link rel="stylesheet" href="./css/parcel.box.css" />
+
+  <script src="./js/filter.sidebar.js"></script>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script src="./js/series.picker.js"></script>
+  <script src="./js/trace.styler.js"></script>
+  <script src="./js/parcel.box.js"></script>
+  <script src="./js/plot.wrapper.js"></script>
+</head>
+
+<body>
+  <div class="scene" id="scene">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar" aria-label="Sidebar">
+      <div class="sidebar-header">
+        <h1 class="sidebar-title">Filters</h1>
+        <!-- <div class="sidebar-close-button">&times;</div> -->
+      </div>
+      <div class="filter-container"></div>
+      <p class="sidebar-hint">Click values to filter. Each box filters one column (AND logic).</p>
+      <div class="sidebar-resizer" id="sidebarResizer" title="Drag to resize"></div>
+    </aside>
+    <!-- Main content (plot area) -->
+    <main class="main" id="main">
+      <div class="card">
+        <div class="main-toolbar">
+          <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="Toggle menu">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+          <div class="filter-pill"></div>
+        </div>
+        <div class="plot-wrapper"></div>
+      </div>
+    </main>
+  </div>
+
+  <template id="filter-pill">
+    <button class="filter-chip" type="button" aria-haspopup="true" aria-expanded="false">
+      <span class="filter-chip-prefix">Active filters:</span>
+      <span class="filter-chip-label">All data</span>
+      <span class="filter-chip-caret" aria-hidden="true">&#9662;</span>
+    </button>
+    <div class="filter-dropdown" hidden>
+      <div class="filter-dropdown-content">
+        <div class="filter-empty">All data (no filters applied)</div>
+      </div>
+    </div>
+  </template>
+
+  <template id="parcel-box">
+    <div class="box">
+      <div class="box-header"></div>
+      <div class="series-picker"></div>
+      <div class="trace-styler"> </div>
+      <div class="plot-display"></div>
+      <div class="axis-control"></div>
+    </div>
+  </template>
+
+  <template id="add-button">
+    <div class="add-button">+</div>
+  </template>
+
+  <template id="settings-button">
+    <button class="settings-circle" type="button" aria-label="Settings">
+      <svg class="settings-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.5 7.5 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.9 1h-3.8a.5.5 0 0 0-.49.42l-.36 2.54c-.58.23-1.12.54-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 7.48a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.83 14.52a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.4 1.05.71 1.63.94l.36 2.54a.5.5 0 0 0 .49.42h3.8a.5.5 0 0 0 .49-.42l.36-2.54c.58-.23 1.12-.54 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z" />
+      </svg>
+    </button>
+  </template>
+
+  <template id="series-picker">
+    <h2 class="series-picker-header">Select an option</h2>
+    <div class="series-picker-choices"></div>
+    <div class="series-picker-buttons">
+      <button class="cancelButton" type="button">Cancel</button>
+      <button class="confirmButton" type="button">OK</button>
+    </div>
+  </template>
+
+  <template id="range-control">
+    <div class="form-group range-row">
+      <label></label>
+      <input type="range" />
+      <span class="range-value"></span>
+    </div>
+  </template>
+
+  <template id="trace-styler">
+    <h2 class="board-title">Style Settings</h2>
+
+    <div class="form-group">
+      <label class="trace-label">Select Trace</label>
+      <select class="trace-select"></select>
+    </div>
+
+    <div class="select-style-and-color">
+      <div class="form-group">
+        <label class="line-dash-label">Line Style</label>
+        <select class="line-dash-select"></select>
+      </div>
+
+      <div class="form-group">
+        <label class="line-color-label">Line Color</label>
+        <input type="color" class="line-color-input" value="#1f77b4">
+      </div>
+    </div>
+
+    <div class="range-mount line-width-mount"></div>
+    <div class="range-mount line-opacity-mount"></div>
+
+    <!-- MARKERS -->
+    <div class="form-group checkbox-group">
+      <input type="checkbox" class="marker-toggle-input" />
+      <label class="marker-toggle-label">Enable Markers</label>
+    </div>
+
+    <!-- MARKER SETTINGS -->
+    <div class="marker-settings">
+      <div class="range-mount marker-size-mount"></div>
+
+      <div class="form-group">
+        <label class="marker-symbol-label">Marker Symbol</label>
+        <select class="marker-symbol-select"></select>
+      </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="button-row">
+      <button class="apply-style">Apply</button>
+      <button class="reset-style secondary">Reset</button>
+    </div>
+
+  </template>
+
+  <script src="./js/main.js" defer></script>
+
+</body>
+
+</html>

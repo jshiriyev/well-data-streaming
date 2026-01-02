@@ -1,4 +1,0 @@
-Metadata-Version: 2.1
-Name: wellx
-Version: 0.0.62
-Requires-Dist: numpy>=1.26.4

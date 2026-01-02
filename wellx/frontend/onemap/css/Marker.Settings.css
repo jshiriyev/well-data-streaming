@@ -1,0 +1,36 @@
+.marker-settings-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-size: 14px;
+}
+
+.marker-settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.marker-settings-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.marker-settings-label {
+  font-weight: 600;
+}
+
+.marker-settings-select {
+  padding: 6px 10px;
+  border: 1px solid #c9c9c9;
+  border-radius: 6px;
+  font-size: 14px;
+  min-width: 200px;
+}
+
+.marker-settings-select:focus {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+}

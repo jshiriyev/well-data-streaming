@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Log View</title>
+  <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+  <script src="./js/session.state.js"></script>
+  <link rel="stylesheet" href="./css/main.css" />
+</head>
+
+<body>
+  <aside class="panel">
+
+    <div class="card" id="LASSettings">
+      <h2>LAS Settings</h2>
+      <input id="lasFile" type="file" accept=".las,.LAS,.txt" />
+      <div class="row">
+        <div>
+          <label for="nullValue">Null value (optional)</label>
+          <input id="nullValue" type="text" placeholder="auto (e.g., -999.25)" />
+        </div>
+      </div>
+      <div id="loadStatus" class="status">No LAS loaded.</div>
+    </div>
+
+    <div class="card" id="suiteSettings">
+      <h2>Suite Settings</h2>
+
+      <div class="row depth-range">
+        <div>
+          <label for="topDepth">Top Depth</label>
+          <input id="topDepth" type="number" step="any" placeholder="e.g., 1000" />
+        </div>
+        <div>
+          <label for="baseDepth">Base Depth</label>
+          <input id="baseDepth" type="number" step="any" placeholder="e.g., 2000" />
+        </div>
+      </div>
+      <div class="row apply-depths-button">
+        <button id="fitUserDepthBtn" class="btn small">Apply depths</button>
+      </div>
+
+      <div class="row trail-controls">
+        <div>
+          <label for="trailCount">Trail Count</label>
+          <input id="trailCount" type="number" min="1" step="1" max="10" />
+        </div>
+        <div>
+          <label for="trailGap">Trail gap</label>
+          <input id="trailGap" type="number" min="0" max="0.1" step="0.005" />
+        </div>
+      </div>
+
+      <fieldset class="grid-settings">
+        <legend>Grid Settings</legend>
+
+        <div class="left-column show">
+          <input id="gridShow" type="checkbox" data-bind="grid.show" />
+          <label for="gridShow">Show grid</label>
+        </div>
+        <div class="right-column">
+          <label for="gridWidth">Width</label>
+          <input id="gridWidth" type="number" min="0" step="0.05" data-bind="grid.width" />
+        </div>
+
+        <div class="left-column">
+          <label for="gridColor">Color</label>
+          <input id="gridColor" type="color" data-bind="grid.color" />
+        </div>
+        <div class="right-column">
+          <label for="gridAlpha">Alpha</label>
+          <input id="gridAlpha" type="number" min="0" max="1" step="0.05" data-bind="grid.alpha" />
+        </div>
+
+        <fieldset class="grid-settings-minor">
+          <div class="section-legend">Minor Grid</div>
+
+          <div class="left-column show">
+            <input id="gridMinorShow" type="checkbox" data-bind="grid.minor.show" />
+            <label for="gridMinorShow">Show minors</label>
+          </div>
+          <div class="right-column">
+            <label for="gridMinorWidth">Width</label>
+            <input id="gridMinorWidth" type="number" min="0" step="0.05" data-bind="grid.minor.width" />
+          </div>
+
+          <div class="left-column">
+            <label for="gridMinorColor">Color</label>
+            <input id="gridMinorColor" type="color" data-bind="grid.minor.color" />
+          </div>
+
+          <div class="right-column">
+            <label for="gridMinorAlpha">Alpha</label>
+            <input id="gridMinorAlpha" type="number" min="0" max="1" step="0.05" data-bind="grid.minor.alpha" />
+          </div>
+        </fieldset>
+
+      </fieldset>
+
+      <fieldset class="separator-settings">
+        <legend>Separator</legend>
+
+        <div class="left-column show">
+          <input id="separatorShow" type="checkbox" data-bind="separator.show" />
+          <label for="separatorShow">Show separator</label>
+        </div>
+
+        <div class="right-column">
+          <label for="separatorWidth">Width</label>
+          <input id="separatorWidth" type="number" step="0.05" data-bind="separator.width" />
+        </div>
+
+        <div class="left-column">
+          <label for="separatorColor">Color</label>
+          <input id="separatorColor" type="color" data-bind="separator.color" />
+        </div>
+
+        <div class="right-column">
+          <label for="separatorAlpha">Alpha</label>
+          <input id="separatorAlpha" type="number" min="0" max="1" step="0.05" data-bind="separator.alpha" />
+        </div>
+
+      </fieldset>
+
+      <div class="row">
+        <div class="field">
+          <label for="trailSelect">Choose trail</label>
+          <div class="select-wrap">
+            <select id="trailSelect" data-role="trail-select"></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="trail-panel" data-role="trail-panel"></div>
+    </div>
+
+  </aside>
+
+  <main class="log-suite">
+    <div id="logHead"></div>
+    <div class="log-divider" role="separator" aria-orientation="horizontal"></div>
+    <div id="logBody"></div>
+  </main>
+
+  <template id="trailSettingsTemplate">
+    <header>
+      <div class="title" data-role="trail-title">Trail</div>
+      <button class="btn small danger" data-action="clearTrail">Clear curves</button>
+    </header>
+
+    <div class="row">
+      <div>
+        <label data-role="xmin-label">X min (optional)</label>
+        <input type="number" step="any" placeholder="auto" data-field="xMin" data-role="xmin-input" />
+      </div>
+      <div>
+        <label data-role="xmax-label">X max (optional)</label>
+        <input type="number" step="any" placeholder="auto" data-field="xMax" data-role="xmax-input" />
+      </div>
+    </div>
+
+    <div class="field-label">Curves</div>
+    <div class="curve-list"></div>
+  </template>
+
+  <script src="./js/archie.setup.js" defer></script>
+</body>
+
+</html>

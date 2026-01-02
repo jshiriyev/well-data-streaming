@@ -1,0 +1,66 @@
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sidebar-title {
+  font-size: 2.5rem;
+  font-weight: 500;
+  font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+.sidebar-close-button {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid #d9e1ec;
+  background: white;
+  display: flex;
+  /* align-items: center; */
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 150ms ease, background 150ms ease;
+  color: #2f3c54;
+  /* font: 700 15px/1 "Segoe UI", system-ui, -apple-system, sans-serif; */
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.sidebar-close-button:hover {
+  background: linear-gradient(145deg, #f7f9fc, #eef3fa);
+  color: #1b2740;
+  transform: rotate(-8deg);
+  box-shadow: 0 4px 10px rgba(0, 32, 96, 0.08);
+}
+
+.sidebar-hint {
+  font-size: 1.1rem;
+  margin-top: 12px;
+  color: #666;
+}
+
+.sidebar.is-open .sidebar-panel {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.sidebar-close {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-close:hover {
+  background: rgba(0, 0, 0, .05);
+}

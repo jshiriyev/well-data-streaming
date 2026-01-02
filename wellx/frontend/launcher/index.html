@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Field Data Portal</title>
+  <link rel="stylesheet" href="./main.css" />
+</head>
+
+<body>
+  <main class="card">
+    <header class="header">
+      <h1>Oil-Gas Field Portal</h1>
+      <p>Select a module to launch an application.</p>
+    </header>
+
+    <section class="links">
+      <a href="/onemap/" class="onemap">
+        <div class="tile-top">
+          <svg class="tile-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M12 2C8.1 2 5 5.1 5 9c0 5.2 6.4 12.6 6.7 12.9a.5.5 0 0 0 .7 0c.2-.3 6.6-7.7 6.6-12.9 0-3.9-3.1-7-7-7m0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5" />
+          </svg>
+          <span class="title">OneMap</span>
+        </div>
+        <div class="tile-map" aria-hidden="true">
+          <div class="map-dot map-dot-a"></div>
+          <div class="map-dot map-dot-b"></div>
+          <div class="map-dot map-dot-c"></div>
+          <svg class="map-contours" viewBox="0 0 120 44" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <g fill="none" stroke="currentColor" stroke-width=".3" opacity=".55" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="M4 22C4 8 26 2 48 4c26 2 48 10 48 18 0 12-22 20-48 18-22-2-44-7-44-18" transform="scale(1.2)" />
+              <path d="M18 22c0-9 16-13 30-12 18 1 34 5 34 12 0 9-16 13-34 12-14-1-30-4-30-12" transform="scale(1.3)" />
+              <path d="M32 22c0-4 8-6 16-5.5C58 17 68 19 68 22c0 5-10 6.5-20 6-8-.5-16-2-16-6" transform="scale(1.3)" />
+            </g>
+          </svg>
+        </div>
+        <small>Contours, wells, filters</small>
+      </a>
+
+      <a href="/timeseries/">
+        <div class="tile-top">
+          <svg class="tile-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M5 19a1 1 0 0 1-1-1V6a1 1 0 1 1 2 0v11h13a1 1 0 1 1 0 2zm3.8-8.2 3.4-2.4 2.2 1.4 3.1-3.9a1 1 0 1 1 1.6 1.2l-3.7 4.6a1 1 0 0 1-1.3.2l-2.2-1.4-1.8 1.8a1 1 0 1 1 0-1.4" />
+          </svg>
+          <span class="title">Time-Series</span>
+        </div>
+        <div class="tile-map" aria-hidden="true">
+          <svg class="timeseries" viewBox="0 0 120 44" aria-hidden="true">
+            <!-- axes -->
+            <path d="M10 44H112" />
+            <path d="M10 44V2" />
+            <!-- decline curve / forecast (main) -->
+            <path class="ts-fit" d="M42 15 L80 26" />
+            <!-- forecast extension (dashed via CSS) -->
+            <path class="ts-forecast" d="M84 27 L112 33" />
+            <!-- data points -->
+            <path d="M22 10h2v2h-2zM36 12h2v2h-2zM50 16h2v2h-2zM62 21h2v2h-2zM74 25h2v2h-2z" />
+          </svg>
+        </div>
+        <small>Production Trends & Decline Analysis</small>
+      </a>
+
+      <a href="/archie/">
+        <div class="tile-top">
+          <svg class="tile-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 3v18H4V3Zm6 0v18h-1V3Zm6 0v18h-1V3Z" />
+          </svg>
+          <span class="title">Archie</span>
+        </div>
+        <div class="tile-map" aria-hidden="true">
+          <svg class="map-contours" viewBox="0 0 120 44" aria-hidden="true">
+            <rect x="2" y="6" width="116" height="32" rx="4" fill="none" stroke="currentColor" stroke-width="2"
+              opacity=".9" />
+            <path d="M12 10v24" fill="none" stroke="currentColor" stroke-width="2" opacity=".9" />
+            <path d="M44 10v24m32-24v24" fill="none" stroke="currentColor" stroke-width="2" opacity=".25" />
+            <path d="M18 12c8-2 16 2 18 6s-4 8-12 10-6 4-4 6" fill="none" stroke="currentColor" stroke-width="2" />
+            <path d="M50 12c8-2 16 2 18 6s-4 8-12 10-6 4-4 6m30-22c8-2 16 2 20 6s-4 8-12 10-8 4-6 6" fill="none"
+              stroke="currentColor" stroke-width="2" opacity=".85" />
+          </svg>
+        </div>
+        <small>Formation Evaluation</small>
+      </a>
+
+      <a href="/fluidlab/">
+        <div class="tile-top">
+          <svg class="tile-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M10 2a1 1 0 0 1 0 2v5.2L6.9 14a6 6 0 0 0 5.1 9h.1a6 6 0 0 0 5.1-9L14 9.2V4a1 1 0 1 1 0-2zm2 10.2c2.6 0 4.6 1.8 4.9 4.3.1.7-.5 1.3-1.2 1.3H8.3c-.7 0-1.3-.6-1.2-1.3.3-2.5 2.3-4.3 4.9-4.3" />
+          </svg>
+          <span class="title">Fluid Lab</span>
+        </div>
+        <div class="tile-map" aria-hidden="true">
+          <svg class="map-contours" viewBox="0 0 120 44" aria-hidden="true">
+            <path d="M2 10 C18 4, 36 6, 54 12 S90 20, 118 10" />
+            <path d="M4 22 C22 16, 40 18, 60 24 S94 30, 116 22" />
+            <path d="M6 34 C26 28, 44 30, 66 36 S98 42, 114 34" />
+          </svg>
+        </div>
+        <small>Reservoir Fluid & PVT Analysis</small>
+      </a>
+
+      <a href="/deliverables/">
+        <div class="tile-top">
+          <svg class="tile-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M4 21a1 1 0 0 1 0-2h2.3l3.1-15.2A2 2 0 0 1 11.4 2h1.2a2 2 0 0 1 2 1.8L17.7 19H20a1 1 0 1 1 0 2H4zm6.3-17L7.5 18h2.2l.4-2h3.8l.4 2h2.2L13.7 4a.3.3 0 0 0-.3-.2h-1.2a.3.3 0 0 0-.3.2zm.2 3.5h3l-.2 1H10.7l-.2-1zm-.6 3h4.2l-.2 1H10.1l-.2-1zm-.6 3h5.4l-.2 1H9.5l-.2-1zm.2 6h5l-.2-1H9.7l-.2 1z" />
+          </svg>
+          <span class="title">Deliverables</span>
+        </div>
+        <div class="tile-map" aria-hidden="true">
+          <svg class="map-contours" viewBox="0 0 120 44" aria-hidden="true">
+            <path d="M2 10 C18 4, 36 6, 54 12 S90 20, 118 10" />
+            <path d="M4 22 C22 16, 40 18, 60 24 S94 30, 116 22" />
+            <path d="M6 34 C26 28, 44 30, 66 36 S98 42, 114 34" />
+          </svg>
+        </div>
+        <small>Well Performance Diagnostics</small>
+      </a>
+
+      <a href="/impulse/">
+        <div class="tile-top">
+          <svg class="tile-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M13 2 4 14h6l-1 8 11-14h-6l1-6z" />
+          </svg>
+          <span class="title">Impulse</span>
+        </div>
+        <div class="tile-map" aria-hidden="true">
+          <svg class="map-contours" viewBox="0 0 120 44" aria-hidden="true">
+            <path d="M2 10 C18 4, 36 6, 54 12 S90 20, 118 10" />
+            <path d="M4 22 C22 16, 40 18, 60 24 S94 30, 116 22" />
+            <path d="M6 34 C26 28, 44 30, 66 36 S98 42, 114 34" />
+          </svg>
+        </div>
+        <small>Pressure Transient Analysis</small>
+      </a>
+    </section>
+  </main>
+  <script src="./main.js" defer></script>
+</body>
+
+</html>
