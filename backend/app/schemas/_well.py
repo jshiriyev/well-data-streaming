@@ -66,14 +66,14 @@ class Well:
     # ---- core identity ----
     name     : Name
 
-    operator : str = None
-    field    : str = None
-    county   : str = None
-    state    : str = None
-    country  : str = None
-    service  : str = None
+    operator : str | None = None
+    field    : str | None = None
+    county   : str | None = None
+    state    : str | None = None
+    country  : str | None = None
+    service  : str | None = None
 
-    platform : str = None
+    platform : str | None = None
 
     status   : Optional[Status] = None            # current interval (from your Status class)
 
@@ -87,7 +87,7 @@ class Well:
 
     # ---- formation evaluation data ----
     logs: Tuple[str, ...] = dataclassfield(default_factory=tuple)
-    reservoir: str = None
+    reservoir: str | None = None
 
     # ---- production surveillance data ----
     rates: Optional[RateTable] = None

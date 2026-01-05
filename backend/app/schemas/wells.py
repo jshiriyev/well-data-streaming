@@ -22,7 +22,7 @@ class GeoJSONFeatureCollection(BaseModel):
 
 class WellOut(BaseModel):
     well: str | None = None
-    horizon: str
-    spud_date: str  # ISO date as string
+    horizon: str | None = None
+    spud_date: str | None = None  # ISO date as string
     lon: float
     lat: float
