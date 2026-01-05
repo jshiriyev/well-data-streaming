@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wellx-backend"
+version = "0.1.0"
+description = "FastAPI backend for the WellX webapp."
+dependencies = [
+  "fastapi==0.110.0",
+  "uvicorn==0.29.0",
+  "pandas==2.2.2",
+  "python-dotenv==1.0.1",
+]

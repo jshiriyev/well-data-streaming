@@ -1,0 +1,43 @@
+.wx-card {
+  background: var(--wx-surface);
+  border: 1px solid var(--wx-border);
+  border-radius: var(--wx-radius-md);
+  box-shadow: var(--wx-shadow-sm);
+  padding: 16px;
+}
+
+.wx-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--wx-border);
+  background: var(--wx-surface);
+  color: var(--wx-muted);
+  font-size: 12px;
+}
+
+.wx-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: var(--wx-radius-sm);
+  border: 1px solid transparent;
+  background: var(--wx-accent);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.wx-button:hover {
+  background: var(--wx-accent-strong);
+}
+
+.wx-button--ghost {
+  background: transparent;
+  color: var(--wx-text);
+  border-color: var(--wx-border);
+}

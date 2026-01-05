@@ -6,10 +6,11 @@ frontend modules (OneMap, Time-Series, Archie, and more).
 ## Repo layout
 
 - `backend/app/main.py`: FastAPI app, mounts static frontends and API routes.
-- `frontend/launcher`: entry page (`/`) that links modules.
-- `frontend/onemap`, `frontend/timeseries`, `frontend/archie`, `frontend/fluidlab`,
-  `frontend/impulse`, `frontend/deliverables`: static HTML/JS apps.
-- `frontend/config.js`: shared API base resolver used by the frontends.
+- `frontend/src/pages/launcher`: entry page (`/`) that links modules.
+- `frontend/src/pages/onemap`, `frontend/src/pages/timeseries`, `frontend/src/pages/archie`,
+  `frontend/src/pages/fluidlab`, `frontend/src/pages/impulse`,
+  `frontend/src/pages/deliverables`, `frontend/src/pages/datahub`: page-specific HTML/JS apps.
+- `frontend/src/shared`: shared base (styles + API config).
 
 ## Requirements
 
@@ -58,7 +59,13 @@ file is ignored.
 python -m venv .venv
 # Windows: .\.venv\Scripts\Activate.ps1
 # macOS/Linux: source .venv/bin/activate
-pip install -r backend/requirements.txt
+pip install -e backend
+
+# build the frontend (required for the bundled UI)
+cd frontend
+npm install
+npm run build
+cd ..
 
 # set DATA_DIR (see above)
 uvicorn backend.app.main:app --reload --port 8000
@@ -76,24 +83,34 @@ Open:
 
 ```bash
 cd frontend
-python -m http.server 5173
+npm install
+npm run dev
+```
+
+For a production build:
+
+```bash
+cd frontend
+npm run build
 ```
 
 Then point the UI at the API by setting a base URL:
 
-- Edit `<meta name="api-base-url" content="http://localhost:8000">` in
-  `frontend/onemap/index.html` and `frontend/timeseries/index.html`, or
-- Define `window.API_BASE_URL` before loading `frontend/config.js`.
+- Edit `<meta name="api-base-url" content="http://localhost:8000">` in the page
+  HTML (e.g. `frontend/src/pages/onemap/index.html`), or
+- Define `window.API_BASE_URL` in an inline script before the page's module entry.
+- Set `window.API_BASE_URL` in `frontend/public/api-config.js` (served as `/api-config.js`).
 
-`frontend/config.js` normalizes the base URL and builds `/api` requests.
+The shared API resolver lives in `frontend/src/shared/config.js` and is bundled into
+the shared Vite chunk.
 
 ## prodpy integration
 
 The core webapp does not require `prodpy`. It is used by Streamlit prototypes in:
 
-- `frontend/timeseries/_dcadash.py`
-- `frontend/timeseries/_dcadash_dataselect.py`
-- `frontend/onemap/_welldash.py`
+- `frontend/src/pages/timeseries/_dcadash.py`
+- `frontend/src/pages/timeseries/_dcadash_dataselect.py`
+- `frontend/src/pages/onemap/_welldash.py`
 
 If you want to run these, install `prodpy` (plus `streamlit` and `plotly`) and
 start them with `streamlit run <file>`.

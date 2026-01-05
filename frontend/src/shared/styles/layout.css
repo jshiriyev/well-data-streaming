@@ -1,0 +1,26 @@
+.wx-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.wx-page__content {
+  flex: 1;
+}
+
+.wx-container {
+  width: min(1200px, 100% - 32px);
+  margin: 0 auto;
+}
+
+.wx-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.wx-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
