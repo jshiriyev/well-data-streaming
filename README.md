@@ -1,128 +1,99 @@
-# well-data-streaming – Python Data Structures for Well-Centric Applications
+# WellX Webapp
 
-**WellX** is a Python package providing **modular, immutable-ish data structures** for managing well-related information across the entire lifecycle of a well — from **location surveys** and **formation tops** to **drilling records**, **production surveillance**, and **formation evaluation**.
+WellX Webapp is a FastAPI backend that serves an API and a set of static
+frontend modules (OneMap, Time-Series, Archie, and more).
 
-The package is built with:
+## Repo layout
 
-* **Data integrity first** – strong validation rules
-* **Web-app readiness** – efficient, immutable-friendly structures ideal for frameworks like Streamlit
-* **Plotly integration** – for interactive visualization
-* **Future DB connectivity** – planned integration with well databases
-* **MIT License** – free for commercial and academic use
+- `backend/app/main.py`: FastAPI app, mounts static frontends and API routes.
+- `frontend/launcher`: entry page (`/`) that links modules.
+- `frontend/onemap`, `frontend/timeseries`, `frontend/archie`, `frontend/fluidlab`,
+  `frontend/impulse`, `frontend/deliverables`: static HTML/JS apps.
+- `frontend/config.js`: shared API base resolver used by the frontends.
 
----
+## Requirements
 
-## ✨ Key Features
+- Python 3.x and pip.
+- Data directory containing:
+  - `wells.geojson` (GeoJSON FeatureCollection; features should include
+    `properties.well_name` and `geometry.coordinates`).
+  - `rates.csv` with a `date` column plus any numeric/categorical fields.
 
-* **Geology-aware structures**:
+## Configure environment
 
-  * `Survey` – store & transform wellbore trajectory data (MD/TVD, offsets, inclinations, azimuths)
-  * `Tops` – manage formation tops with MD-based ordering, color mapping, and interval logic
-* **Strict validation**:
+The API requires `DATA_DIR` pointing to the data folder.
 
-  * Positive MD only, unique formation names, sorted data
-  * Raises descriptive errors for invalid input
-* **Convenience methods**:
-
-  * Convert between MD and TVD
-  * Query formation intervals
-  * Find which formation contains a given depth
-* **Facecolor mapping** for geological visualization
-* **Interoperable** with numpy and pandas without forcing dependencies
-
----
-
-## 📦 Installation
+Option A: set it in your shell:
 
 ```bash
-pip install wellx
+# PowerShell
+$env:DATA_DIR="C:\path\to\data"
+
+# macOS/Linux
+export DATA_DIR="/path/to/data"
 ```
 
----
+Option B: use `backend/.env` (only loaded when `LOAD_DOTENV` is set):
 
-## 🚀 Quick Start
+```bash
+# PowerShell
+$env:LOAD_DOTENV="1"
 
-```python
-import numpy as np
-from wellx import Survey, Tops
-
-# Example 1: Create a well survey and get plan & section views
-survey = Survey(
-    MD=np.array([0, 500, 1000]),
-    TVD=np.array([0, 450, 900]),
-    DX=np.array([0, 100, 150]),
-    DY=np.array([0, 300, 600]),
-    INC=np.array([0, 10, 20]),
-    AZI=np.array([0, 45, 90])
-)
-
-print(survey.md2tvd([750]))  # interpolate TVD at MD=750
-
-# Example 2: Manage formation tops
-tops = Tops(
-    formation=["Sand_A", "Shale_B", "Lime_C"],
-    depth=[1200.0, 1850.5, 2500.0],
-    facecolor={"Sand_A": "yellow", "Shale_B": "gray"}
-)
-
-print(tops.get_limit("Sand_A"))  # (1200.0, 1850.5)
-print(tops.find_at_md(2000))     # "Shale_B"
+# macOS/Linux
+export LOAD_DOTENV=1
 ```
 
----
+`backend/.env` example:
 
-## 📊 Visualizing with Plotly
-
-```python
-import plotly.express as px
-import pandas as pd
-
-df = pd.DataFrame({
-    "MD": survey.MD,
-    "TVD": survey.TVD
-})
-
-fig = px.line(df, x="MD", y="TVD", title="Wellbore Profile")
-fig.show()
+```ini
+DATA_DIR=/path/to/data
 ```
 
----
+Note: `LOAD_DOTENV` must be set before starting the API; otherwise the `.env`
+file is ignored.
 
-## 📂 Planned Data Structure Coverage
+## Run the API (and bundled frontend)
 
-<img src="img/well_data.jpg">
+```bash
+python -m venv .venv
+# Windows: .\.venv\Scripts\Activate.ps1
+# macOS/Linux: source .venv/bin/activate
+pip install -r backend/requirements.txt
 
----
+# set DATA_DIR (see above)
+uvicorn backend.app.main:app --reload --port 8000
+```
 
-## 📅 Roadmap
+Open:
 
-1. **Core Data Structures** – Survey, Tops, Production Rates
-2. **Visualization Tools** – Plotly-based built-ins
-3. **Database Connectivity** – optional integration with field data servers
-4. **Streamlit App Templates** – deployable dashboards
-5. **Export/Import Utilities** – CSV, LAS, JSON, and database connectors
+- `http://localhost:8000/` (launcher)
+- `http://localhost:8000/onemap/`
+- `http://localhost:8000/timeseries/`
+- `http://localhost:8000/archie/`
+- `http://localhost:8000/docs` (API docs)
 
----
+## Run the frontend separately (optional)
 
-## 🤝 Contributing
+```bash
+cd frontend
+python -m http.server 5173
+```
 
-Contributions are welcome!
+Then point the UI at the API by setting a base URL:
 
-* Fork the repo
-* Create a branch (`feature/my-feature`)
-* Submit a pull request with clear description and tests
+- Edit `<meta name="api-base-url" content="http://localhost:8000">` in
+  `frontend/onemap/index.html` and `frontend/timeseries/index.html`, or
+- Define `window.API_BASE_URL` before loading `frontend/config.js`.
 
----
+`frontend/config.js` normalizes the base URL and builds `/api` requests.
 
-## 📜 License
+## prodpy integration
 
-MIT License – you are free to use, modify, and distribute this package commercially and academically.
-See [LICENSE](LICENSE) for details.
+The core webapp does not require `prodpy`. It is used by Streamlit prototypes in:
 
----
+- `frontend/timeseries/_dcadash.py`
+- `frontend/timeseries/_dcadash_dataselect.py`
+- `frontend/onemap/_welldash.py`
 
-## 📬 Contact
-
-**Author:** Javid Shiriyev
-📧 Email: [shiriyevcavid@gmail.com](mailto:shiriyevcavid@gmail.com)
-🔗 LinkedIn: [linkedin.com/in/jshiriyev](https://www.linkedin.com/in/jshiriyev/)
+If you want to run these, install `prodpy` (plus `streamlit` and `plotly`) and
+start them with `streamlit run <file>`.
