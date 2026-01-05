@@ -14,33 +14,62 @@ import pandas as pd
 
 from .routers import wells, rates
 
-load_dotenv()
+DOTENV_PATH = Path(__file__).resolve().parents[1] / ".env"
 
-DATA_DIR = Path(os.getenv('DATA_DIR','/data/path'))
+def _should_load_dotenv() -> bool:
+    value = os.getenv("LOAD_DOTENV", "").strip().lower()
+    return value in {"1", "true", "yes", "on"}
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    
-    with open(DATA_DIR / "wells.geojson", "r", encoding="utf-8") as f:
-        app.state.wells = json.load(f)
-    
-    app.state.rates = pd.read_csv(
-        DATA_DIR / "rates.csv",
+if _should_load_dotenv() and DOTENV_PATH.exists():
+    load_dotenv(DOTENV_PATH)
+
+DATA_DIR_RAW = os.getenv("DATA_DIR")
+if not DATA_DIR_RAW:
+    raise RuntimeError(
+        "DATA_DIR is required. Set DATA_DIR to the folder containing wells.geojson and rates.csv."
+    )
+
+DATA_DIR = Path(DATA_DIR_RAW)
+if not DATA_DIR.exists():
+    raise RuntimeError(f"DATA_DIR does not exist: {DATA_DIR}")
+if not DATA_DIR.is_dir():
+    raise RuntimeError(f"DATA_DIR is not a directory: {DATA_DIR}")
+
+WELLS_FILENAME = "wells.geojson"
+RATES_FILENAME = "rates.csv"
+
+def load_wells(path: Path) -> dict:
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+def load_rates(path: Path) -> pd.DataFrame:
+    return pd.read_csv(
+        path,
         parse_dates=["date"],
         dayfirst=True,
     )
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    wells_path = DATA_DIR / WELLS_FILENAME
+    rates_path = DATA_DIR / RATES_FILENAME
+
+    app.state.wells_path = wells_path
+    app.state.rates_path = rates_path
+
+    app.state.wells = load_wells(wells_path)
+    app.state.rates = load_rates(rates_path)
+    app.state.rates_mtime = rates_path.stat().st_mtime
 
     yield
 
 app = FastAPI(title="Field Data API", version="0.1.0", lifespan=lifespan)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-LAUNCHER_DIR = PROJECT_ROOT / "launcher"
-ONEMAP_DIR = PROJECT_ROOT / "onemap"
-TIMESERIES_DIR = PROJECT_ROOT / "timeseries"
-ARCHIE_DIR = PROJECT_ROOT / "archie"
-
-print(ARCHIE_DIR)
+LAUNCHER_DIR = PROJECT_ROOT / "frontend" / "launcher"
+ONEMAP_DIR = PROJECT_ROOT / "frontend" / "onemap"
+TIMESERIES_DIR = PROJECT_ROOT / "frontend" / "timeseries"
+ARCHIE_DIR = PROJECT_ROOT / "frontend" / "archie"
 
 for path in (LAUNCHER_DIR, ONEMAP_DIR, TIMESERIES_DIR):
     if not path.exists():

@@ -1,6 +1,7 @@
 import json
 
 import re
+from pathlib import Path
 from typing import Optional, List, Dict, Any
 
 from fastapi import APIRouter, Request
@@ -24,6 +25,51 @@ ALLOWED_AGG_FUNCTIONS = {
 }
 
 _AGG_RE = re.compile(r"^\s*(?P<col>[^:]+)\s*:\s*(?P<func>[^:]+)\s*$")
+DEFAULT_LOOKBACK_DAYS = 365
+
+def _load_rates_csv(path: Path) -> pd.DataFrame:
+    return pd.read_csv(
+        path,
+        parse_dates=["date"],
+        dayfirst=True,
+    )
+
+def _ensure_rates_fresh(app) -> pd.DataFrame:
+    df = getattr(app.state, "rates", None)
+    if df is None:
+        raise HTTPException(status_code=500, detail="Rates data is not loaded.")
+
+    path = getattr(app.state, "rates_path", None)
+    if not path:
+        return df
+
+    path = Path(path)
+    try:
+        mtime = path.stat().st_mtime
+    except FileNotFoundError:
+        raise HTTPException(status_code=500, detail=f"Rates file not found: {path}")
+    except OSError as e:
+        raise HTTPException(status_code=500, detail=f"Failed to access rates file: {e}")
+
+    if getattr(app.state, "rates_mtime", None) != mtime:
+        app.state.rates = _load_rates_csv(path)
+        app.state.rates_mtime = mtime
+
+    return app.state.rates
+
+def _parse_date_param(value: Optional[str], label: str) -> Optional[pd.Timestamp]:
+    if value is None:
+        return None
+    try:
+        parsed = pd.to_datetime(value, errors="raise")
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid {label} date '{value}'. Use YYYY-MM-DD.",
+        ) from e
+    if getattr(parsed, "tzinfo", None) is not None:
+        parsed = parsed.tz_convert(None)
+    return parsed
 
 def _validate_agg_dict(agg_dict: dict):
     """
@@ -105,7 +151,17 @@ def _parse_agg_params(agg: Optional[List[str]], df: pd.DataFrame) -> Dict[str, A
 
     return agg_dict
 
-def get_rates(df, *, date_col: str = "date", filter_dict: Dict[str, List[str]] | None = None, agg_dict=None) -> str:
+def get_rates(
+    df,
+    *,
+    date_col: str = "date",
+    filter_dict: Dict[str, List[str]] | None = None,
+    agg_dict=None,
+    start_date: Optional[pd.Timestamp] = None,
+    end_date: Optional[pd.Timestamp] = None,
+    limit: Optional[int] = None,
+    default_days: Optional[int] = None,
+) -> str:
     # Read the CSV file
     rates = df.copy()
 
@@ -116,6 +172,21 @@ def get_rates(df, *, date_col: str = "date", filter_dict: Dict[str, List[str]] |
         for col, values in filter_dict.items():
             if col in rates.columns and values:
                 rates = rates[rates[col].isin(values)]
+
+    if rates.empty:
+        return rates.to_json(orient="columns")
+
+    if start_date is None and end_date is None and default_days:
+        last_date = rates[date_col].max()
+        if pd.isna(last_date):
+            return rates.to_json(orient="columns")
+        start_date = last_date - pd.Timedelta(days=default_days - 1)
+
+    if start_date is not None:
+        rates = rates[rates[date_col] >= start_date]
+
+    if end_date is not None:
+        rates = rates[rates[date_col] <= end_date]
 
     if agg_dict is not None:
         _validate_agg_dict(agg_dict)
@@ -129,6 +200,10 @@ def get_rates(df, *, date_col: str = "date", filter_dict: Dict[str, List[str]] |
     )
 
     rates = grouped.reset_index()
+    rates = rates.sort_values(date_col)
+
+    if limit is not None:
+        rates = rates.tail(limit)
 
     rates[date_col] = rates[date_col].astype(str).str.slice(0, 10)
 
@@ -141,10 +216,23 @@ def list_rates(
         None, 
         description="Aggregations per column, e.g. agg=oil_rate:mean"
     ),
+    start: Optional[str] = Query(
+        None,
+        description="Start date (YYYY-MM-DD). Defaults to last 365 days when omitted.",
+    ),
+    end: Optional[str] = Query(
+        None,
+        description="End date (YYYY-MM-DD). Defaults to last 365 days when omitted.",
+    ),
+    limit: Optional[int] = Query(
+        None,
+        ge=1,
+        description="Max rows after aggregation (applied after sorting by date).",
+    ),
 ):
-    df = request.app.state.rates
+    df = _ensure_rates_fresh(request.app)
 
-    reserved_keys = {"date", "agg"}
+    reserved_keys = {"date", "agg", "start", "end", "limit"}
 
     filter_dict: Dict[str, List[str]] = {}
     for key, value in request.query_params.multi_items():
@@ -154,12 +242,23 @@ def list_rates(
 
     try:
         agg_dict = _parse_agg_params(agg, df) if agg else None
+        start_date = _parse_date_param(start, "start")
+        end_date = _parse_date_param(end, "end")
+        if start_date and end_date and start_date > end_date:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid date range: start date is after end date.",
+            )
 
         rates_json = get_rates(
             df,
             date_col = "date",
             filter_dict = filter_dict or None,
             agg_dict = agg_dict,
+            start_date = start_date,
+            end_date = end_date,
+            limit = limit,
+            default_days = DEFAULT_LOOKBACK_DAYS,
         )
     except KeyError as e:
         raise HTTPException(status_code=400, detail=f"Invalid column: {e}")
@@ -172,7 +271,7 @@ def list_rates(
 
 @router.get("/rates/meta")
 def rates_meta(request: Request):
-    df = request.app.state.rates
+    df = _ensure_rates_fresh(request.app)
 
     # Identify date-like column (prefer explicit 'date')
     date_column = "date" if "date" in df.columns else None

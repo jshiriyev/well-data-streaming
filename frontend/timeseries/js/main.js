@@ -1,5 +1,7 @@
-const RATES_ENDPOINT = "/api/rates";
-const RATES_META_ENDPOINT = "/api/rates/meta";
+const apiConfig = typeof window !== "undefined" ? (window.WellxConfig || {}) : {};
+const buildApiUrl = apiConfig.buildApiUrl || ((path) => path);
+const RATES_ENDPOINT = buildApiUrl("/api/rates");
+const RATES_META_ENDPOINT = buildApiUrl("/api/rates/meta");
 
 (function () {
   const scene = document.querySelector(".scene");
