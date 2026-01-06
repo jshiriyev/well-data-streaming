@@ -79,6 +79,31 @@ Open:
 - `http://localhost:8000/archie/`
 - `http://localhost:8000/docs` (API docs)
 
+## API error contract
+
+`/api/wells` returns a structured `422` payload when the wells GeoJSON includes
+invalid feature coordinates (rather than silently dropping them). Example:
+
+```json
+{
+  "detail": {
+    "message": "Invalid wells data: one or more features have invalid coordinates.",
+    "error_count": 3,
+    "errors": [
+      {
+        "code": "invalid_coordinates",
+        "index": 12,
+        "well": "GUN_042",
+        "detail": "geometry.coordinates must be [lon, lat]"
+      }
+    ]
+  }
+}
+```
+
+`/api/wells` query params are validated by Pydantic, so invalid ISO dates in
+`date=` return a standard FastAPI `422` response with field-level errors.
+
 ## Run the frontend separately (optional)
 
 ```bash

@@ -1,5 +1,6 @@
+from datetime import date
 from typing import Any, List, Dict, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class NumericFilterBounds(BaseModel):
     min: Optional[float] = None
@@ -26,3 +27,13 @@ class WellOut(BaseModel):
     spud_date: str | None = None  # ISO date as string
     lon: float
     lat: float
+
+class WellsQuery(BaseModel):
+    horizon: Optional[str] = Field(
+        None,
+        description="Horizon name, e.g. 'FLD'.",
+    )
+    date: Optional[date] = Field(
+        None,
+        description="ISO date, e.g. '2010-01-01'.",
+    )

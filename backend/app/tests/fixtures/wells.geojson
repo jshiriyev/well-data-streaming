@@ -1,0 +1,41 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [50.0, 40.0]
+      },
+      "properties": {
+        "well_name": "A-01",
+        "horizon": "FLD",
+        "spud_date": "2010-01-01"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [50.1, 40.1]
+      },
+      "properties": {
+        "well_name": "B-02",
+        "horizon": "FLD",
+        "spud_date": "2015-06-01"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [50.2, 40.2]
+      },
+      "properties": {
+        "well_name": "C-03",
+        "horizon": "PK",
+        "spud_date": "2020-01-01"
+      }
+    }
+  ]
+}

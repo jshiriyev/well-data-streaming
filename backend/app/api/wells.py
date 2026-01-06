@@ -1,15 +1,22 @@
-from datetime import datetime
+from datetime import date, datetime
+import math
 
-from typing import Optional
+from fastapi import APIRouter, Depends, Request
+from fastapi import HTTPException
 
-from fastapi import APIRouter, Request
-from fastapi import HTTPException, Query
-
-from ..schemas.wells import WellOut
+from ..schemas.wells import WellOut, WellsQuery
 
 router = APIRouter()
+MAX_ERROR_SAMPLES = 10
 
-def _parse_iso_date(value: Optional[str]) -> Optional[datetime]:
+class WellDataError(Exception):
+    def __init__(self, message: str, errors: list[dict], error_count: int) -> None:
+        super().__init__(message)
+        self.message = message
+        self.errors = errors
+        self.error_count = error_count
+
+def _parse_iso_date(value: str | None) -> datetime | None:
     if not value:
         return None
     try:
@@ -17,29 +24,58 @@ def _parse_iso_date(value: Optional[str]) -> Optional[datetime]:
     except (TypeError, ValueError):
         return None
 
-def _extract_coords(feature: dict) -> Optional[tuple[float, float]]:
+def _extract_coords(feature: dict) -> tuple[tuple[float, float] | None, str | None]:
     geometry = feature.get("geometry")
     if not isinstance(geometry, dict):
-        return None
+        return None, "geometry must be an object"
     coords = geometry.get("coordinates")
     if not isinstance(coords, (list, tuple)) or len(coords) < 2:
-        return None
+        return None, "geometry.coordinates must be [lon, lat]"
     try:
         lon = float(coords[0])
         lat = float(coords[1])
     except (TypeError, ValueError):
-        return None
-    return lon, lat
+        return None, "geometry.coordinates must be numeric"
+    if not (math.isfinite(lon) and math.isfinite(lat)):
+        return None, "geometry.coordinates must be finite numbers"
+    return (lon, lat), None
 
-def get_wells(wells, horizon: str | None = None, date_str: str | None = None) -> list:
+def get_wells(
+    wells,
+    horizon: str | None = None,
+    date_value: date | None = None,
+) -> list:
     """Return unique wells filtered by optional horizon and/or date."""
+    if not isinstance(wells, dict):
+        raise WellDataError(
+            "Invalid wells data: expected GeoJSON object.",
+            errors=[{"code": "invalid_geojson", "detail": "Expected a GeoJSON object."}],
+            error_count=1,
+        )
 
     selected_wells: dict[str, dict] = {}
+    errors: list[dict] = []
+    error_count = 0
 
-    selected_date = datetime.fromisoformat(date_str) if date_str else None
+    selected_date = date_value
 
-    for feature in wells.get("features", []):
+    features = wells.get("features")
+    if not isinstance(features, list):
+        raise WellDataError(
+            "Invalid wells data: missing features list.",
+            errors=[{"code": "invalid_geojson", "detail": "Expected 'features' to be a list."}],
+            error_count=1,
+        )
+
+    for idx, feature in enumerate(features):
         if not isinstance(feature, dict):
+            error_count += 1
+            if len(errors) < MAX_ERROR_SAMPLES:
+                errors.append({
+                    "code": "invalid_feature",
+                    "index": idx,
+                    "detail": "Feature must be an object.",
+                })
             continue
         props = feature.get("properties") or {}
 
@@ -50,15 +86,23 @@ def get_wells(wells, horizon: str | None = None, date_str: str | None = None) ->
         spud_raw = props.get("spud_date")
         spud_date = _parse_iso_date(spud_raw)
         if selected_date is not None and spud_date is not None:
-            if spud_date > selected_date:
+            if spud_date.date() > selected_date:
                 continue
 
         well_name = props.get("well_name")
         if not well_name:
             continue
 
-        coords = _extract_coords(feature)
-        if coords is None:
+        coords, coord_error = _extract_coords(feature)
+        if coord_error:
+            error_count += 1
+            if len(errors) < MAX_ERROR_SAMPLES:
+                errors.append({
+                    "code": "invalid_coordinates",
+                    "index": idx,
+                    "well": well_name,
+                    "detail": coord_error,
+                })
             continue
         lon, lat = coords
 
@@ -72,13 +116,19 @@ def get_wells(wells, horizon: str | None = None, date_str: str | None = None) ->
                 "lat": lat,
             }
 
+    if error_count:
+        raise WellDataError(
+            "Invalid wells data: one or more features have invalid coordinates.",
+            errors=errors,
+            error_count=error_count,
+        )
+
     return list(selected_wells.values())
 
 @router.get("/wells", response_model=list[WellOut])
 def list_wells(
     request: Request,
-    horizon: Optional[str] = Query(None, description="Horizon name, e.g. 'FLD'"),
-    date: Optional[str] = Query(None, description="ISO date, e.g. '2010-01-01'"),
+    params: WellsQuery = Depends(),
 ):
     """
     Returns wells filtered by horizon and date.
@@ -87,9 +137,18 @@ def list_wells(
     try:
         wells = get_wells(
             request.app.state.wells,
-            horizon=horizon,
-            date_str=date,
+            horizon=params.horizon,
+            date_value=params.date,
         )
+    except WellDataError as e:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": e.message,
+                "error_count": e.error_count,
+                "errors": e.errors,
+            },
+        ) from e
     except FileNotFoundError as e:
         raise HTTPException(status_code=500, detail=str(e))
     except ValueError as e:
