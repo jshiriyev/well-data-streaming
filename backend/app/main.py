@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 
 import pandas as pd
 
-from .routers import wells, rates
+from .api import wells, rates
 
 DOTENV_PATH = Path(__file__).resolve().parents[1] / ".env"
 
