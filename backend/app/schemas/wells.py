@@ -1,4 +1,4 @@
-from datetime import date
+import datetime as dt
 from typing import Any, List, Dict, Optional
 from pydantic import BaseModel, Field
 
@@ -33,7 +33,7 @@ class WellsQuery(BaseModel):
         None,
         description="Horizon name, e.g. 'FLD'.",
     )
-    date: Optional[date] = Field(
+    date: Optional[dt.date] = Field(
         None,
         description="ISO date, e.g. '2010-01-01'.",
     )
