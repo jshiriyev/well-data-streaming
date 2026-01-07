@@ -7,7 +7,7 @@ const rootDir = resolve(projectDir, "src");
 const pagesDir = resolve(rootDir, "pages");
 
 export default defineConfig({
-  root: rootDir,
+  root: projectDir,
   base: "/",
   publicDir: resolve(projectDir, "public"),
   resolve: {
@@ -21,7 +21,6 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        launcher: resolve(pagesDir, "launcher/index.html"),
         onemap: resolve(pagesDir, "onemap/index.html"),
         timeseries: resolve(pagesDir, "timeseries/index.html"),
         archie: resolve(pagesDir, "archie/index.html"),

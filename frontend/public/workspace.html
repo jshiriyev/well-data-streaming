@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Workspace + Sidebar Frame (Light)</title>
+    <link rel="stylesheet" href="workspace.css">
+</head>
+
+<body>
+    <div class="app">
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <h1>Controls</h1>
+
+            <div class="card">
+                <h2>Canvas Grid</h2>
+
+                <label for="gridMode">Grid mode</label>
+                <select id="gridMode">
+                    <option value="free">Free (no snap)</option>
+                    <option value="snap">Snap to grid</option>
+                </select>
+
+                <label for="gridSize">Grid size (px)</label>
+                <select id="gridSize">
+                    <option value="24">24</option>
+                    <option value="32" selected>32</option>
+                    <option value="40">40</option>
+                    <option value="56">56</option>
+                    <option value="80">80</option>
+                </select>
+
+                <div class="row" style="margin-top: 10px;">
+                    <button class="btn ghost" id="btnToggleGrid">Toggle grid</button>
+                    <button class="btn ghost" id="btnGridLayout">Grid layout</button>
+                </div>
+
+                <div class="snap-note">
+                    “Grid layout” arranges open panels into a tiled grid.
+                </div>
+            </div>
+        </aside>
+
+        <!-- SIDEBAR RESIZER -->
+        <div class="sidebar-resizer" id="sidebarResizer" aria-label="Resize sidebar"></div>
+
+        <!-- WORKSPACE -->
+        <main class="workspace">
+            <div class="workspace-topbar">
+                <button class="btn primary" id="btnNewPanel">+ New panel</button>
+                <button class="btn ghost" id="btnSpacePanel">Optimize panels</button>
+                <div class="dropdown" id="gridDropdown" aria-expanded="false">
+                    <button class="btn dropdown" id="btnGridDropdown" aria-haspopup="listbox" aria-controls="gridMenu">
+                        Grid Settings
+                        <span class="caret" aria-hidden="true"></span>
+                    </button>
+                    <ul class="dropdown-menu" id="gridMenu" role="listbox" tabindex="-1" aria-labelledby="btnGridDropdown">
+                        <li role="option"><button data-value="1">Option 1</button></li>
+                        <li role="option"><button data-value="2">Option 2</button></li>
+                        <li role="option"><button data-value="3">Option 3</button></li>
+                        <li role="option"><button data-value="4">Option 4</button></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="canvas" id="canvas">
+                <div class="grid-bg" id="gridBg" aria-hidden="true"></div>
+                <!-- Panels injected here -->
+            </div>
+
+            <!-- Dock (minimized panels) -->
+            <div class="dock">
+                <div class="dock-items" id="dockItems"></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="workspace.js"></script>
+</body>
+
+</html>

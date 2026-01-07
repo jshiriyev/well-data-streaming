@@ -83,7 +83,7 @@ class Layout():
             raise TypeError("Only Section objects can be added.")
         self._list.append(pipe)
 
-    def extend(self,pipes:Section) -> None:
+    def extend(self,pipes:list[Section]) -> None:
         """Adds a new 'Section' object to the collection."""
         for pipe in pipes:
             self.append(pipe)

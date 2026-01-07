@@ -59,7 +59,7 @@ class Name:
         return (m.group(group) if m else default)
 
     @staticmethod
-    def parse(name:str,regex:str=None) -> str:
+    def parse(name:str,regex:str|None=None) -> str:
         """Returns a searched part of the name. If no match is found, returns the original name.
 
         Parameters:
@@ -82,7 +82,7 @@ class Name:
 
     # ---------- Formatting / generation ----------
     @staticmethod
-    def apply(index:int,template:str=None) -> str:
+    def apply(index:int,template:str|None=None) -> str:
         """Generates a well name by formatting a given index into a string template.
 
         Parameters:

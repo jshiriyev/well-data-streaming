@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field, fields, replace
 
-import datetime
+import datetime as dt
+
+import math
 
 from typing import Optional, Literal, Iterable, Self, Union, Tuple, Dict, Any
 
@@ -29,14 +31,14 @@ class PerfInterval:
 
     """
     top: float = field(metadata={"unit": "m"})
-    base: float = field(default=None, metadata={"unit": "m"})
+    base: float = field(default=float('nan'), metadata={"unit": "m"})
 
     _unit_override: Dict[str, str] = field(default_factory=dict, init=False, repr=False)
 
     def __post_init__(self) -> None:
 
         top = float(self.top)
-        base = top if self.base is None else float(self.base)
+        base = top if self.base is None or math.isnan(self.base) else float(self.base)
 
         if base < top:
             raise ValueError(f"PerfInterval base ({base}) must be >= top ({top}).")
@@ -119,8 +121,7 @@ class PerfInterval:
             parts = [p.strip() for p in s.split(delimiter)]
             if len(parts) != 2:
                 raise ValueError(f"Expected 'top{delimiter}base'. Got: {s!r}")
-            parts[0] = float(parts[0].replace(decsep, "."))
-            parts[1] = float(parts[1].replace(decsep, "."))
+            parts = [float(p.replace(decsep,".")) for p in parts]
             return cls(min(parts), max(parts))
         except Exception as e:
             raise ValueError(f"Invalid interval string {s!r}: {e}") from e
@@ -153,7 +154,7 @@ class Perf:
         Top of the perforation interval (MD).
     base : float
         Base of the perforation interval (MD). If omitted, equals `top`.
-    date : datetime.date, optional
+    date : dt.date, optional
         Perforation date (or record date).
     formation : str, optional
         Zone/formation label.
@@ -171,9 +172,9 @@ class Perf:
     well: str
 
     top: float = field(metadata={"unit": "m"})
-    base: float = field(default=None, metadata={"unit": "m"})
+    base: float = field(default=float('nan'), metadata={"unit": "m"})
 
-    date: Optional[datetime.date] = None
+    date: Optional[dt.date] = None
     formation: Optional[str] = None
     guntype: Optional[str] = None
 
@@ -184,8 +185,8 @@ class Perf:
         if not isinstance(self.well, str) or not self.well.strip():
             raise ValueError("well must be a non-empty string")
 
-        if self.date is not None and not isinstance(self.date, datetime.date):
-            raise TypeError("date must be a datetime.date (or None)")
+        if self.date is not None and not isinstance(self.date, dt.date):
+            raise TypeError("date must be a dt.date (or None)")
 
         top = float(self.top)
         base = top if self.base is None else float(self.base)
@@ -288,7 +289,7 @@ class PerfTable():
             raise TypeError("Only Perf objects can be added.")
         self._list.append(perf)
 
-    def extend(self,perfs:Perf) -> None:
+    def extend(self,perfs:list[Perf]) -> None:
         """Adds a new 'Perf' object to the collection."""
         for perf in perfs:
             self.append(perf)
