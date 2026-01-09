@@ -1,5 +1,5 @@
 (() => {
-    const canvas = document.getElementById("canvas");
+    // const canvas = document.getElementById("canvas");
     const gridBg = document.getElementById("gridBg");
     const dockItems = document.getElementById("dockItems");
 
@@ -40,77 +40,17 @@
     initSidebarResize();
 
     // Top buttons
-    const btnNewPanel = document.getElementById("btnNewPanel");
-    const btnSpacePanel = document.getElementById("btnSpacePanel");
-
-    const gridDropdown = document.getElementById("gridDropdown");
-    const btnGridDropdown = document.getElementById("btnGridDropdown");
-    const gridMenu = document.getElementById("gridMenu");
-    const gridItems = Array.from(gridMenu.querySelectorAll("li"));
-
-    function openMenu() {
-        gridDropdown.setAttribute("aria-expanded", "true");
-        gridMenu.focus();
-        // focus first item for keyboard users
-        gridItems[0]?.focus();
-    }
-
-    function closeMenu(focusBtn = true) {
-        gridDropdown.setAttribute("aria-expanded", "false");
-        if (focusBtn) btnGridDropdown.focus();
-    }
-
-    function isOpen() {
-        return gridDropdown.getAttribute("aria-expanded") === "true";
-    }
-
-    btnGridDropdown.addEventListener("click", () => (isOpen() ? closeMenu(false) : openMenu()));
-
-    // Click outside closes
-    document.addEventListener("click", (e) => {
-        if (!gridDropdown.contains(e.target) && isOpen()) closeMenu(false);
-    });
-
-    // Menu item click
-    gridMenu.addEventListener("click", (e) => {
-        const b = e.target.closest("button[data-value]");
-        if (!b) return;
-        const val = b.dataset.value;
-        out.textContent = `You selected: ${val}`;
-        closeMenu();
-    });
-
-    // Keyboard handling
-    document.addEventListener("keydown", (e) => {
-        if (!isOpen()) return;
-
-        const i = gridItems.indexOf(document.activeElement);
-        if (e.key === "Escape") {
-            e.preventDefault();
-            closeMenu();
-        } else if (e.key === "ArrowDown") {
-            e.preventDefault();
-            gridItems[Math.min(i + 1, gridItems.length - 1)]?.focus();
-        } else if (e.key === "ArrowUp") {
-            e.preventDefault();
-            gridItems[Math.max(i - 1, 0)]?.focus();
-        } else if (e.key === "Tab") {
-            // optional: close on tab out
-            closeMenu(false);
-        }
-    });
+    const btnNewPanel = document.getElementById("createPanel");
+    const btnSpacePanel = document.getElementById("optimizePanels");
 
     // Grid controls
-    const gridMode = document.getElementById("gridMode");
-    const gridSizeSel = document.getElementById("gridSize");
-    const btnToggleGrid = document.getElementById("btnToggleGrid");
-    const btnGridLayout = document.getElementById("btnGridLayout");
-
-    const query = document.getElementById("query");
+    const gridSizeSel = document.getElementById("gridSizeRange");
 
     let zTop = 10;
     let panelCount = 0;
-    let gridOn = false;
+    let gridModeOn = false;
+    let gridSnapOn = false;
+    let gridSnapMode = "none";
 
     function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
 
@@ -139,7 +79,7 @@
     }
 
     function snap(n) {
-        if (gridMode.value !== "snap") return n;
+        if (gridSnapMode !== "snap") return n;
         const s = getGridSize();
         return Math.round(n / s) * s;
     }
@@ -418,7 +358,7 @@
             let newW = clamp(startW + dx, 260, maxW);
             let newH = clamp(startH + dy, 160, maxH);
 
-            if (gridMode.value === "snap") {
+            if (gridSnapMode === "snap") {
                 const s = getGridSize();
                 newW = Math.max(260, Math.round(newW / s) * s);
                 newH = Math.max(160, Math.round(newH / s) * s);
@@ -482,24 +422,11 @@
         });
     }
 
-    // (6) Explicit “Grid layout”: same as optimize but respects grid size, and optional equal cells
-    function gridLayout() {
-        optimizePanels(); // already snaps if enabled, but we also ensure grid size CSS updated
-    }
-
-    // ----- Grid controls -----
-    btnToggleGrid.addEventListener("click", () => {
-        gridOn = !gridOn;
-        gridBg.classList.toggle("on", gridOn);
-    });
-
     gridSizeSel.addEventListener("change", () => {
         setGridSizeCss();
     });
 
-    btnGridLayout.addEventListener("click", gridLayout);
-
-    // ----- Buttons -----
+    // // ----- Buttons -----
     btnNewPanel.addEventListener("click", () => {
         createPanel({
             title: "New test panel",
@@ -509,13 +436,56 @@
 
     btnSpacePanel.addEventListener("click", optimizePanels);
 
-    btnGridDropdown.addEventListener("click", () => {
-        document.getElementById("gridDropdown").classList.toggle("show");
-    });
-
     // Create initial panel
     createPanel({
         title: "Welcome",
         body: "Light mode + resizable sidebar + docked minimization + optimize + grid overlay/snap."
     });
+
+    var acc = document.getElementsByClassName("accordion");
+    var i;
+
+    for (i = 0; i < acc.length; i++) {
+        acc[i].addEventListener("click", function () {
+            this.classList.toggle("active");
+            var panel = this.nextElementSibling;
+            if (panel.style.maxHeight) {
+                panel.style.maxHeight = null;
+                panel.style.borderStyle = "none";
+            } else {
+                panel.style.maxHeight = panel.scrollHeight + "px";
+                panel.style.borderStyle = "solid";
+            }
+        });
+    }
+
+    const gridModeToggle = document.getElementById("gridModeToggle");
+
+    gridModeToggle.addEventListener("click", function () {
+        gridModeToggle.classList.toggle('on');
+
+        const knobElement = gridModeToggle.querySelector(".knob")
+
+        if (knobElement) {
+            knobElement.classList.toggle('on');
+        }
+
+        gridModeOn = !gridModeOn;
+        gridBg.classList.toggle("on", gridModeOn);
+    });
+
+    const gridSnapToggle = document.getElementById("gridSnapToggle");
+
+    gridSnapToggle.addEventListener("click", function () {
+        gridSnapToggle.classList.toggle('on');
+
+        const knobElement = gridSnapToggle.querySelector(".knob")
+
+        if (knobElement) {
+            knobElement.classList.toggle('on');
+        }
+        gridSnapOn = !gridSnapOn;
+        gridSnapMode = gridSnapOn ? "snap" : "none";
+    });
+
 })();
