@@ -451,10 +451,8 @@
             var panel = this.nextElementSibling;
             if (panel.style.maxHeight) {
                 panel.style.maxHeight = null;
-                panel.style.borderStyle = "none";
             } else {
-                panel.style.maxHeight = panel.scrollHeight + "px";
-                panel.style.borderStyle = "solid";
+                panel.style.maxHeight = panel.scrollHeight + 20 +  "px";
             }
         });
     }
