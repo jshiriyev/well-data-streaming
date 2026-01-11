@@ -1,0 +1,177 @@
+:root {
+    /* LIGHT MODE */
+    --bg: #f6f8fc;
+    --bg2: #ffffff;
+    --line: rgba(20, 25, 40, 0.12);
+    --text: rgba(20, 25, 40, 0.92);
+    --muted: rgba(20, 25, 40, 0.62);
+    --radius: 14px;
+
+    --sidebarW: 320px;
+    --sidebarMin: 240px;
+    --sidebarMax: 520px;
+
+    --barH: 42px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    background: linear-gradient(180deg, #f6f8fc 0%, #eef2fb 55%, #e9eef9 100%);
+    color: var(--text);
+    overflow: hidden;
+}
+
+/* App layout (sidebar + resizer + workspace) */
+.app {
+    height: 100%;
+    display: grid;
+    grid-template-columns: var(--sidebarW) 8px 1fr;
+}
+
+/* Sidebar */
+.sidebar {
+    border-right: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    padding: 16px;
+    overflow: auto;
+}
+
+.sidebar h1 {
+    margin: 0 0 12px;
+    font-size: 16px;
+    letter-spacing: 0.2px;
+}
+
+.sidebar-note {
+    margin: 0 0 12px;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.4;
+}
+
+.sidebar-list {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 13px;
+    color: rgba(20, 25, 40, 0.78);
+}
+
+.sidebar-list li {
+    margin-bottom: 8px;
+}
+
+button {
+    width: auto;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+/* Sidebar resizer handle */
+.vertical-resizer {
+    cursor: col-resize;
+    background: linear-gradient(180deg,
+            rgba(10, 20, 40, 0.00),
+            rgba(10, 20, 40, 0.06),
+            rgba(10, 20, 40, 0.00));
+    position: relative;
+}
+
+.vertical-resizer::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 2px;
+    height: 42px;
+    transform: translate(-50%, -50%);
+    border-radius: 2px;
+    background: rgba(10, 20, 40, 0.22);
+    opacity: 0.6;
+}
+
+/* Workspace */
+.workspace {
+    position: relative;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: var(--barH);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(10px);
+    z-index: 8;
+}
+
+.button-primary {
+    width: auto;
+    min-width: 150px;
+    height: calc(var(--barH) - 10px);
+    border-radius: var(--radius);
+    background: linear-gradient(180deg, rgba(64, 120, 255, 0.95), rgba(64, 120, 255, 0.78));
+    border-color: rgba(64, 120, 255, 0.55);
+    color: white;
+}
+
+.button-ghost {
+    width: auto;
+    min-width: 150px;
+    height: calc(var(--barH) - 10px);
+    border-width: 1px;
+    border-radius: var(--radius);
+    background: rgba(10, 20, 40, 0.04);
+}
+
+.golden-layout-root {
+    position: absolute;
+    inset: var(--barH) 0 0 0;
+    min-height: 0;
+}
+
+.gl-panel {
+    padding: 12px;
+    font-size: 13px;
+    color: rgba(10, 20, 40, 0.78);
+    line-height: 1.4;
+}
+
+.gl-panel h3 {
+    margin: 0 0 8px;
+    font-size: 14px;
+    color: rgba(10, 20, 40, 0.86);
+}
+
+.gl-panel .meta {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+}
+
+.gl-fallback {
+    display: grid;
+    place-items: center;
+    height: 100%;
+    padding: 24px;
+    text-align: center;
+    color: var(--muted);
+}
