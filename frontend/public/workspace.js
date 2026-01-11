@@ -1,5 +1,5 @@
 (() => {
-    // const canvas = document.getElementById("canvas");
+    const canvas = document.getElementById("canvas");
     const gridBg = document.getElementById("gridBg");
     const dockItems = document.getElementById("dockItems");
 
@@ -50,7 +50,6 @@
     let panelCount = 0;
     let gridModeOn = false;
     let gridSnapOn = false;
-    let gridSnapMode = "none";
 
     function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
 
@@ -79,7 +78,7 @@
     }
 
     function snap(n) {
-        if (gridSnapMode !== "snap") return n;
+        if (!gridSnapOn) return n;
         const s = getGridSize();
         return Math.round(n / s) * s;
     }
@@ -358,7 +357,7 @@
             let newW = clamp(startW + dx, 260, maxW);
             let newH = clamp(startH + dy, 160, maxH);
 
-            if (gridSnapMode === "snap") {
+            if (gridSnapOn) {
                 const s = getGridSize();
                 newW = Math.max(260, Math.round(newW / s) * s);
                 newH = Math.max(160, Math.round(newH / s) * s);
@@ -397,7 +396,7 @@
         }
 
         const c = getCanvasRect();
-        const gap = 12;
+        const gap = 0;
         const n = panels.length;
 
         // choose cols/rows to approach aspect ratio
@@ -483,7 +482,6 @@
             knobElement.classList.toggle('on');
         }
         gridSnapOn = !gridSnapOn;
-        gridSnapMode = gridSnapOn ? "snap" : "none";
     });
 
 })();
