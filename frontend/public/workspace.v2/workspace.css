@@ -7,11 +7,13 @@
     --muted: rgba(20, 25, 40, 0.62);
     --radius: 14px;
 
-    --sidebarW: 320px;
+    --controlW: 320px;
+    --settingsW: 320px;
     --sidebarMin: 240px;
     --sidebarMax: 520px;
 
     --barH: 42px;
+    --dockH: 32px;
 }
 
 * {
@@ -35,7 +37,7 @@ body {
 .app {
     height: 100%;
     display: grid;
-    grid-template-columns: var(--sidebarW) 8px 1fr;
+    grid-template-columns: var(--controlW) 8px 1fr 8px var(--settingsW);
 }
 
 /* Sidebar */
@@ -107,7 +109,7 @@ button {
     background: rgba(255, 255, 255, 0.18);
 }
 
-.bar {
+/* .bar {
     position: absolute;
     left: 0;
     right: 0;
@@ -121,7 +123,7 @@ button {
     background: rgba(255, 255, 255, 0.72);
     backdrop-filter: blur(10px);
     z-index: 8;
-}
+} */
 
 .button-primary {
     width: auto;
@@ -144,7 +146,7 @@ button {
 
 .golden-layout-root {
     position: absolute;
-    inset: var(--barH) 0 0 0;
+    inset: 0 0 var(--dockH) 0;
     min-height: 0;
 }
 
@@ -167,6 +169,21 @@ button {
     margin-bottom: 8px;
 }
 
+.gl-settings-btn {
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0 6px;
+    opacity: 0.7;
+}
+
+.gl-settings-btn:hover {
+    opacity: 1;
+}
+
 .gl-fallback {
     display: grid;
     place-items: center;
@@ -174,4 +191,169 @@ button {
     padding: 24px;
     text-align: center;
     color: var(--muted);
+}
+
+#goldenLayoutRoot .lm_header {
+    display: flex;
+    align-items: center;
+    z-index: auto;
+}
+
+#goldenLayoutRoot .lm_header .lm_tabs {
+    height: 100% !important;
+    display: flex;
+    align-items: center;
+}
+
+#goldenLayoutRoot .lm_tab {
+    height: 100% !important;
+    cursor: default;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+#goldenLayoutRoot .lm_tab .lm_title {
+    padding: 0 6px;
+}
+
+/* Golden Layout tab settings button */
+#goldenLayoutRoot .lm_tab .lm_settings,
+#goldenLayoutRoot .lm_tab .lm_close_tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px !important;
+    height: 18px !important;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: rgba(10, 20, 40, 0.04);
+    color: rgba(10, 20, 40, 0.75);
+    top: auto !important;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+#goldenLayoutRoot .lm_tab .lm_close_tab::before {
+    content: "\00d7"; 
+    font-family: Arial, sans-serif; /* Clean, sans-serif font for the symbol */
+}
+
+#goldenLayoutRoot .lm_controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Dock for minimized panels */
+.dock {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: var(--dockH);
+    border-top: 1px solid var(--line);
+    /* background: rgba(255, 255, 255, 0.78); */
+    backdrop-filter: blur(10px);
+    z-index: 7;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+}
+
+.dock-items {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow: auto;
+    flex: 1;
+}
+
+.dock-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--line);
+    background: rgba(10, 20, 40, 0.03);
+    border-radius: var(--radius);
+    padding: 8px 10px;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.dock-pill:hover {
+    background: rgba(10, 20, 40, 0.06);
+}
+
+.dock-pill .mini-x {
+    width: 22px;
+    height: 22px;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    color: rgba(10, 20, 40, 0.65);
+    background: rgba(255, 255, 255, 0.8);
+}
+
+/* Settings sidebar content */
+.settings-panel {
+    display: grid;
+    gap: 12px;
+}
+
+.settings-heading {
+    font-size: 13px;
+    font-weight: 700;
+    color: rgba(10, 20, 40, 0.88);
+}
+
+.settings-section {
+    margin-top: 6px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.settings-field {
+    display: grid;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.settings-field.settings-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.settings-label {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.settings-input {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.85);
+    color: var(--text);
+    font-size: 13px;
+}
+
+.settings-textarea {
+    resize: vertical;
+    min-height: 70px;
 }
