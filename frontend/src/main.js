@@ -1,4 +1,4 @@
-import "./style.css";
+import "./styles/launcher.css";
 
 const page = document.body?.dataset?.page;
 if (page === "launcher") {
