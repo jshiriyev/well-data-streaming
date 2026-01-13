@@ -1,10 +1,14 @@
 import "@shared/main.js";
 import "../../workspaces/golden-workspace/styles.css";
-import { createGoldenWorkspace } from "../../workspaces/golden-workspace/createGoldenWorkspace.js";
+
+import { 
+    createGoldenWorkspace 
+} from "../../workspaces/golden-workspace/createGoldenWorkspace.js";
+
 import {
     registerArchieComponents,
     archieSettingsRegistry
-} from "../../workspaces/golden-workspace/configs/archie.js";
+} from "../../workspaces/plotly-configs/archie.js";
 
 const workspaceTypeSelect = document.getElementById("workspaceType");
 const plotTypeSelect = document.getElementById("plotType");

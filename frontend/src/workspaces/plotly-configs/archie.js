@@ -1,37 +1,56 @@
-const ARCHIE_SETTINGS_ROOT_ATTR = "data-archie-settings-root";
+import "./archie.css";
 
-const DEFAULT_GRID = {
-    show: true,
-    width: 0.05,
-    color: "#20305f",
-    alpha: 0.55,
-    minor: {
-        show: false,
-        width: 0.03,
-        color: "#20305f",
-        alpha: 0.25
-    }
-};
+const instances = new WeakMap();
+let settingsAutoOpened = false;
 
-const DEFAULT_SEPARATOR = {
-    show: true,
-    width: 1,
-    color: "#20305f",
-    alpha: 0.9
-};
-
-const DEFAULT_STATE = {
-    fileName: "No file",
-    las: null,
-    nullValue: "",
+const DEFAULT_SETTING_STATE = {
     depthTop: "",
     depthBase: "",
     trailCount: 3,
     trailGap: 0.012,
     trails: [],
-    grid: DEFAULT_GRID,
-    separator: DEFAULT_SEPARATOR
+    grid: {
+        show: true,
+        width: 0.05,
+        color: "#20305f",
+        alpha: 0.55,
+        minor: {
+            show: false,
+            width: 0.03,
+            color: "#20305f",
+            alpha: 0.25
+        }
+    },
+    separator: {
+        show: true,
+        width: 1,
+        color: "#20305f",
+        alpha: 0.9
+    }
 };
+
+const ARCHIE_TRAIL_TEMPLATE = `
+    <div class="settings-panel">
+      <div class="settings-row settings-row--split">
+        <div class="settings-heading" data-role="trail-title">Trail</div>
+        <button class="settings-button settings-button--danger" data-action="clearTrail" type="button">Clear curves</button>
+      </div>
+
+      <div class="settings-row">
+        <label class="settings-field">
+          <span class="settings-label" data-role="xmin-label">X min (optional)</span>
+          <input class="settings-input" type="number" step="any" placeholder="auto" data-field="xMin" data-role="xmin-input" />
+        </label>
+        <label class="settings-field">
+          <span class="settings-label" data-role="xmax-label">X max (optional)</span>
+          <input class="settings-input" type="number" step="any" placeholder="auto" data-field="xMax" data-role="xmax-input" />
+        </label>
+      </div>
+
+      <div class="settings-section">Curves</div>
+      <div class="curve-list"></div>
+    </div>
+`;
 
 function clamp(n, min, max) {
     return Math.max(min, Math.min(max, n));
@@ -41,16 +60,6 @@ function toNumber(value) {
     if (value === "" || value == null) return null;
     const n = Number(value);
     return Number.isFinite(n) ? n : null;
-}
-
-function escapeHtml(str) {
-    return String(str).replace(/[&<>"']/g, (m) => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        "\"": "&quot;",
-        "'": "&#39;"
-    }[m]));
 }
 
 function toRgba(hex, alpha) {
@@ -65,12 +74,6 @@ function toRgba(hex, alpha) {
     }
     const a = Number.isFinite(alpha) ? alpha : 0.6;
     return `rgba(${r}, ${g}, ${b}, ${a})`;
-}
-
-function formatDepth(value) {
-    const n = (typeof value === "number") ? value : Number(value);
-    if (!Number.isFinite(n)) return "-";
-    return Math.abs(n) >= 1000 ? n.toFixed(1) : n.toFixed(3);
 }
 
 function normalizeTrails(trails, count) {
@@ -93,103 +96,6 @@ function normalizeTrails(trails, count) {
     }
 
     return next;
-}
-
-function parseLAS(text, forcedNullValue = null) {
-    const lines = text.split(/\r?\n/);
-
-    const idxCurve = lines.findIndex((line) => /^\s*~\s*C/i.test(line));
-    const idxAscii = lines.findIndex((line) => /^\s*~\s*A/i.test(line));
-    if (idxAscii === -1) {
-        throw new Error("LAS parser: '~A' (ASCII data) section not found.");
-    }
-
-    let nullVal = null;
-    for (const line of lines) {
-        const match = line.match(/^\s*NULL\s*\.\s*([+-]?\d+(\.\d+)?)/i);
-        if (match) {
-            nullVal = Number(match[1]);
-            break;
-        }
-    }
-
-    if (forcedNullValue != null && forcedNullValue !== "") {
-        const n = Number(forcedNullValue);
-        if (!Number.isNaN(n)) nullVal = n;
-    }
-
-    const curveNames = [];
-    if (idxCurve !== -1 && idxCurve < idxAscii) {
-        for (let i = idxCurve + 1; i < idxAscii; i += 1) {
-            const raw = lines[i];
-            if (!raw || /^\s*~/.test(raw)) break;
-            if (/^\s*#/.test(raw)) continue;
-            let match = raw.match(/^\s*([A-Za-z0-9_\/-]+)\s*\./);
-            if (!match) match = raw.match(/^\s*([A-Za-z0-9_\/-]+)/);
-            if (match) curveNames.push(match[1].trim());
-        }
-    }
-
-    const dataRows = [];
-    for (let i = idxAscii + 1; i < lines.length; i += 1) {
-        const raw = lines[i];
-        if (!raw) continue;
-        if (/^\s*~/.test(raw)) break;
-        if (/^\s*#/.test(raw)) continue;
-
-        const parts = raw.trim().split(/\s+/);
-        if (parts.length < 2) continue;
-
-        const nums = parts.map((part) => {
-            const v = Number(part);
-            return Number.isFinite(v) ? v : null;
-        });
-        if (nums.some((v) => v !== null)) dataRows.push(nums);
-    }
-
-    if (!dataRows.length) {
-        throw new Error("LAS parser: no numeric rows found under '~A'.");
-    }
-
-    const nCols = dataRows[0].length;
-    let names = curveNames.slice(0, nCols);
-    if (names.length !== nCols) {
-        names = Array.from({ length: nCols }, (_, i) => (i === 0 ? "DEPT" : `CURVE_${i}`));
-    }
-    names[0] = names[0] || "DEPT";
-
-    const cols = Object.fromEntries(names.map((name) => [name, []]));
-    for (const row of dataRows) {
-        for (let c = 0; c < nCols; c += 1) {
-            const v = (c < row.length) ? row[c] : null;
-            cols[names[c]].push(v);
-        }
-    }
-
-    if (nullVal != null && Number.isFinite(nullVal)) {
-        for (const key of Object.keys(cols)) {
-            cols[key] = cols[key].map((v) => (v === nullVal ? null : v));
-        }
-    }
-
-    const depthKey = names[0];
-    const depth = cols[depthKey];
-
-    const curves = {};
-    for (const key of names.slice(1)) curves[key] = cols[key];
-
-    const finiteDepth = depth.filter((v) => Number.isFinite(v));
-    const dmin = Math.min(...finiteDepth);
-    const dmax = Math.max(...finiteDepth);
-
-    return {
-        depthKey,
-        depth,
-        curves,
-        nullValue: nullVal,
-        depthMin: dmin,
-        depthMax: dmax
-    };
 }
 
 function buildLogFigure(state) {
@@ -249,9 +155,6 @@ function buildLogFigure(state) {
     const width = (1 - totalGap) / trails.length;
     const data = [];
 
-    const las = state.las;
-    const curveNames = las ? Object.keys(las.curves) : [];
-
     trails.forEach((trail, index) => {
         const xref = index === 0 ? "x" : `x${index + 1}`;
         const axisKey = index === 0 ? "xaxis" : `xaxis${index + 1}`;
@@ -289,42 +192,11 @@ function buildLogFigure(state) {
             tickfont: { size: 11 },
             range: hasRange ? [xmin, xmax] : undefined
         };
-
-        if (!las) return;
-
-        trail.curves.forEach((curveName) => {
-            if (!curveNames.includes(curveName)) return;
-            const x = las.curves[curveName];
-            const y = las.depth;
-            if (!x || !y) return;
-
-            data.push({
-                type: "scattergl",
-                mode: "lines",
-                name: `T${trail.id}: ${curveName}`,
-                x,
-                y,
-                xaxis: xref,
-                yaxis: "y",
-                connectgaps: false,
-                hovertemplate: `${escapeHtml(curveName)}<br>Depth: %{y:.3f}<br>Value: %{x:.6g}<extra></extra>`
-            });
-        });
     });
 
     const selectedCount = trails.reduce((acc, trail) => acc + trail.curves.size, 0);
 
-    if (!las) {
-        layout.annotations = [{
-            xref: "paper",
-            yref: "paper",
-            x: 0.5,
-            y: 0.5,
-            text: "Load a LAS file to plot curves.",
-            showarrow: false,
-            font: { size: 14, color: "#5b6b8c" }
-        }];
-    } else if (!selectedCount) {
+    if (!selectedCount) {
         layout.annotations = [{
             xref: "paper",
             yref: "paper",
@@ -346,22 +218,10 @@ function buildLogFigure(state) {
     return { data, layout, config };
 }
 
-export function createArchieState(overrides = {}) {
+function createArchieState(overrides = {}) {
     const state = {
-        ...DEFAULT_STATE,
+        ...DEFAULT_SETTING_STATE,
         ...overrides,
-        grid: {
-            ...DEFAULT_GRID,
-            ...(overrides.grid || {}),
-            minor: {
-                ...DEFAULT_GRID.minor,
-                ...((overrides.grid && overrides.grid.minor) || {})
-            }
-        },
-        separator: {
-            ...DEFAULT_SEPARATOR,
-            ...(overrides.separator || {})
-        }
     };
 
     state.trailCount = Math.max(1, Number(state.trailCount) || 1);
@@ -369,111 +229,110 @@ export function createArchieState(overrides = {}) {
     return state;
 }
 
-export function renderArchieSettings({ root } = {}) {
+function renderArchieSettings({ root } = {}) {
     if (!root) return;
 
     root.innerHTML = `
-        <div class="settings-panel" ${ARCHIE_SETTINGS_ROOT_ATTR}="true">
-            <div class="settings-heading">Suite Settings</div>
-            <div class="settings-section">Depth Range</div>
-            <div class="settings-row">
-                <label class="settings-field">
-                    <span class="settings-label">Top Depth</span>
-                    <input class="settings-input" type="number" step="any" placeholder="e.g., 1000" data-role="top-depth" />
-                </label>
-                <label class="settings-field">
-                    <span class="settings-label">Base Depth</span>
-                    <input class="settings-input" type="number" step="any" placeholder="e.g., 2000" data-role="base-depth" />
-                </label>
-            </div>
-            <div class="settings-actions">
-                <button class="settings-button" type="button" data-action="apply-depths">Apply depths</button>
-            </div>
-
-            <div class="settings-section">Trail Controls</div>
-            <div class="settings-row">
-                <label class="settings-field">
-                    <span class="settings-label">Trail Count</span>
-                    <input class="settings-input" type="number" min="1" step="1" max="10" data-role="trail-count" />
-                </label>
-                <label class="settings-field">
-                    <span class="settings-label">Trail gap</span>
-                    <input class="settings-input" type="number" min="0" max="0.1" step="0.005" data-role="trail-gap" />
-                </label>
-            </div>
-
-            <div class="settings-section">Grid Settings</div>
-            <label class="settings-field settings-checkbox">
-                <input type="checkbox" data-role="grid-show" />
-                <span class="settings-label">Show grid</span>
+        <div class="settings-heading">Suite Settings</div>
+        <div class="settings-section">Depth Range</div>
+        <div class="settings-row">
+            <label class="settings-field">
+                <span class="settings-label">Top Depth</span>
+                <input class="settings-input" type="number" step="any" placeholder="e.g., 1000" data-role="top-depth" />
             </label>
             <label class="settings-field">
-                <span class="settings-label">Width</span>
-                <input class="settings-input" type="number" min="0" step="0.05" data-role="grid-width" />
+                <span class="settings-label">Base Depth</span>
+                <input class="settings-input" type="number" step="any" placeholder="e.g., 2000" data-role="base-depth" />
             </label>
-            <label class="settings-field">
-                <span class="settings-label">Color</span>
-                <input class="settings-input" type="color" data-role="grid-color" />
-            </label>
-            <label class="settings-field">
-                <span class="settings-label">Alpha</span>
-                <input class="settings-input" type="number" min="0" max="1" step="0.05" data-role="grid-alpha" />
-            </label>
-
-            <div class="settings-section">Minor Grid</div>
-            <label class="settings-field settings-checkbox">
-                <input type="checkbox" data-role="grid-minor-show" />
-                <span class="settings-label">Show minors</span>
-            </label>
-            <label class="settings-field">
-                <span class="settings-label">Width</span>
-                <input class="settings-input" type="number" min="0" step="0.05" data-role="grid-minor-width" />
-            </label>
-            <label class="settings-field">
-                <span class="settings-label">Color</span>
-                <input class="settings-input" type="color" data-role="grid-minor-color" />
-            </label>
-            <label class="settings-field">
-                <span class="settings-label">Alpha</span>
-                <input class="settings-input" type="number" min="0" max="1" step="0.05" data-role="grid-minor-alpha" />
-            </label>
-
-            <div class="settings-section">Separator</div>
-            <label class="settings-field settings-checkbox">
-                <input type="checkbox" data-role="separator-show" />
-                <span class="settings-label">Show separator</span>
-            </label>
-            <label class="settings-field">
-                <span class="settings-label">Width</span>
-                <input class="settings-input" type="number" step="0.05" data-role="separator-width" />
-            </label>
-            <label class="settings-field">
-                <span class="settings-label">Color</span>
-                <input class="settings-input" type="color" data-role="separator-color" />
-            </label>
-            <label class="settings-field">
-                <span class="settings-label">Alpha</span>
-                <input class="settings-input" type="number" min="0" max="1" step="0.05" data-role="separator-alpha" />
-            </label>
-
-            <div class="settings-section">Trail</div>
-            <label class="settings-field">
-                <span class="settings-label">Choose trail</span>
-                <select class="settings-input" data-role="trail-select"></select>
-            </label>
-            <div class="trail-panel" data-role="trail-panel"></div>
         </div>
+        <div class="settings-actions">
+            <button class="settings-button" type="button" data-action="apply-depths">Apply depths</button>
+        </div>
+
+        <div class="settings-section">Trail Controls</div>
+        <div class="settings-row">
+            <label class="settings-field">
+                <span class="settings-label">Trail Count</span>
+                <input class="settings-input" type="number" min="1" step="1" max="10" data-role="trail-count" />
+            </label>
+            <label class="settings-field">
+                <span class="settings-label">Trail gap</span>
+                <input class="settings-input" type="number" min="0" max="0.1" step="0.005" data-role="trail-gap" />
+            </label>
+        </div>
+
+        <div class="settings-section">Grid Settings</div>
+        <label class="settings-field settings-checkbox">
+            <input type="checkbox" data-role="grid-show" />
+            <span class="settings-label">Show grid</span>
+        </label>
+        <label class="settings-field">
+            <span class="settings-label">Width</span>
+            <input class="settings-input" type="number" min="0" step="0.05" data-role="grid-width" />
+        </label>
+        <label class="settings-field">
+            <span class="settings-label">Color</span>
+            <input class="settings-input" type="color" data-role="grid-color" />
+        </label>
+        <label class="settings-field">
+            <span class="settings-label">Alpha</span>
+            <input class="settings-input" type="number" min="0" max="1" step="0.05" data-role="grid-alpha" />
+        </label>
+
+        <div class="settings-section">Minor Grid</div>
+        <label class="settings-field settings-checkbox">
+            <input type="checkbox" data-role="grid-minor-show" />
+            <span class="settings-label">Show minors</span>
+        </label>
+        <label class="settings-field">
+            <span class="settings-label">Width</span>
+            <input class="settings-input" type="number" min="0" step="0.05" data-role="grid-minor-width" />
+        </label>
+        <label class="settings-field">
+            <span class="settings-label">Color</span>
+            <input class="settings-input" type="color" data-role="grid-minor-color" />
+        </label>
+        <label class="settings-field">
+            <span class="settings-label">Alpha</span>
+            <input class="settings-input" type="number" min="0" max="1" step="0.05" data-role="grid-minor-alpha" />
+        </label>
+
+        <div class="settings-section">Separator</div>
+        <label class="settings-field settings-checkbox">
+            <input type="checkbox" data-role="separator-show" />
+            <span class="settings-label">Show separator</span>
+        </label>
+        <label class="settings-field">
+            <span class="settings-label">Width</span>
+            <input class="settings-input" type="number" step="0.05" data-role="separator-width" />
+        </label>
+        <label class="settings-field">
+            <span class="settings-label">Color</span>
+            <input class="settings-input" type="color" data-role="separator-color" />
+        </label>
+        <label class="settings-field">
+            <span class="settings-label">Alpha</span>
+            <input class="settings-input" type="number" min="0" max="1" step="0.05" data-role="separator-alpha" />
+        </label>
+
+        <div class="settings-section">Trail</div>
+        <label class="settings-field">
+            <span class="settings-label">Choose trail</span>
+            <select class="settings-input" data-role="trail-select"></select>
+        </label>
+        <div class="trail-panel" data-role="trail-panel"></div>
     `;
 }
 
 export function createArchiePanel({
     root,
-    trailTemplateId = "trailSettingsTemplate",
     state = createArchieState()
 } = {}) {
     if (!root) {
         throw new Error("createArchiePanel requires a root element.");
     }
+
+    root.classList.add("plotly-panel", "plotly-panel--archie");
 
     let settingsRoot = null;
     let renderRaf = 0;
@@ -521,13 +380,8 @@ export function createArchiePanel({
     }
 
     function renderTrailSettings(trailEl, trail) {
-        const tpl = document.getElementById(trailTemplateId);
-        if (!tpl) {
-            trailEl.innerHTML = "<div class=\"status\">Trail template not found.</div>";
-            return;
-        }
 
-        const fragment = tpl.content.cloneNode(true);
+        const fragment = ARCHIE_TRAIL_TEMPLATE.content.cloneNode(true);
         const titleEl = fragment.querySelector('[data-role="trail-title"]');
         if (titleEl) titleEl.textContent = `Trail ${trail.id}`;
 
@@ -547,35 +401,6 @@ export function createArchiePanel({
         const xmaxInput = fragment.querySelector('[data-field="xMax"]');
         if (xminInput) xminInput.value = trail.xMin ?? "";
         if (xmaxInput) xmaxInput.value = trail.xMax ?? "";
-
-        const list = fragment.querySelector(".curve-list");
-        if (list) {
-            if (!state.las) {
-                list.innerHTML = "<div class=\"status\">No curves loaded.</div>";
-            } else {
-                list.innerHTML = "";
-                Object.keys(state.las.curves).forEach((curveName) => {
-                    const item = document.createElement("label");
-                    item.className = "curve-item";
-
-                    const checkbox = document.createElement("input");
-                    checkbox.type = "checkbox";
-                    checkbox.dataset.curve = curveName;
-                    checkbox.checked = trail.curves.has(curveName);
-
-                    const text = document.createElement("span");
-                    text.textContent = curveName;
-
-                    const tag = document.createElement("small");
-                    tag.textContent = checkbox.checked ? "selected" : "";
-
-                    item.appendChild(checkbox);
-                    item.appendChild(text);
-                    item.appendChild(tag);
-                    list.appendChild(item);
-                });
-            }
-        }
 
         trailEl.innerHTML = "";
         trailEl.appendChild(fragment);
@@ -664,20 +489,6 @@ export function createArchiePanel({
         };
     }
 
-    function autoSelectCurves() {
-        if (!state.las) return;
-        const curveNames = Object.keys(state.las.curves);
-        state.trails.forEach((trail) => trail.curves.clear());
-        let idx = 0;
-        state.trails.forEach((trail) => {
-            const take = Math.max(1, Math.min(2, curveNames.length - idx));
-            for (let i = 0; i < take && idx < curveNames.length; i += 1) {
-                trail.curves.add(curveNames[idx]);
-                idx += 1;
-            }
-        });
-    }
-
     function applySettingsState() {
         if (!settingsRoot) return;
         const trailCount = settingsRoot.querySelector('[data-role="trail-count"]');
@@ -728,14 +539,7 @@ export function createArchiePanel({
         settingsRoot = rootEl;
         applySettingsState();
         rebuildTrailsUI();
-        if (state.las) {
-            setStatus(`Loaded: ${state.fileName || "LAS"} | Curves: ${Object.keys(state.las.curves).length}`);
-        } else {
-            setStatus("No LAS loaded.");
-        }
 
-        const lasFile = settingsRoot.querySelector('[data-role="las-file"]');
-        const nullValue = settingsRoot.querySelector('[data-role="null-value"]');
         const topDepth = settingsRoot.querySelector('[data-role="top-depth"]');
         const baseDepth = settingsRoot.querySelector('[data-role="base-depth"]');
         const applyDepths = settingsRoot.querySelector('[data-action="apply-depths"]');
@@ -756,28 +560,6 @@ export function createArchiePanel({
         const separatorWidth = settingsRoot.querySelector('[data-role="separator-width"]');
         const separatorColor = settingsRoot.querySelector('[data-role="separator-color"]');
         const separatorAlpha = settingsRoot.querySelector('[data-role="separator-alpha"]');
-
-        addListener(lasFile, "change", async () => {
-            const file = lasFile?.files?.[0];
-            if (!file) return;
-            state.fileName = file.name;
-            try {
-                const text = await file.text();
-                state.las = parseLAS(text, nullValue?.value || null);
-                state.depthTop = String(state.las.depthMin);
-                state.depthBase = String(state.las.depthMax);
-                setStatus(`Loaded: ${file.name} | Curves: ${Object.keys(state.las.curves).length}`);
-                autoSelectCurves();
-                applySettingsState();
-                rebuildTrailsUI();
-                scheduleRender();
-            } catch (err) {
-                state.las = null;
-                setStatus(String(err?.message || err));
-                rebuildTrailsUI();
-                scheduleRender();
-            }
-        });
 
         addListener(nullValue, "input", () => {
             state.nullValue = nullValue.value;
@@ -873,7 +655,6 @@ export function createArchiePanel({
     function initPanel() {
         root.innerHTML = "";
         plotHost = root;
-
         renderPlot();
     }
 
@@ -903,4 +684,49 @@ export function createArchiePanel({
     };
 }
 
-export { ARCHIE_SETTINGS_ROOT_ATTR };
+export function registerArchieComponents(layout, helpers = {}) {
+    settingsAutoOpened = false;
+    layout.registerComponent("archie-log", function (container, state) {
+        const element = container.getElement()[0];
+        if (!element) return;
+
+        const instance = createArchiePanel({
+            root: element,
+            state: createArchieState(state?.archie || {})
+        });
+
+        instances.set(container, instance);
+
+        container.on("resize", () => instance.resize());
+        container.on("destroy", () => {
+            instances.delete(container);
+            instance.destroy();
+        });
+
+        if (helpers && (helpers.attachTabSettings || helpers.openPanelSettings)) {
+            container.on("tab", (tab) => {
+                if (typeof helpers.attachTabSettings === "function") {
+                    helpers.attachTabSettings(tab, container, state);
+                }
+                if (typeof helpers.openPanelSettings === "function") {
+                    const tabElement = tab && tab.element;
+                    if (!tabElement || !tabElement[0]) return;
+                    tabElement.off("click.glOpenSettings");
+                    tabElement.on("click.glOpenSettings", function (e) {
+                        if (e.target.closest(".lm_settings") || e.target.closest(".lm_close_tab")) return;
+                        helpers.openPanelSettings(container, state);
+                    });
+                }
+            });
+        }
+
+        if (!settingsAutoOpened && typeof helpers.openPanelSettings === "function") {
+            settingsAutoOpened = true;
+            helpers.openPanelSettings(container, state);
+        }
+    });
+}
+
+export const archieSettingsRegistry = {
+    "archie-log": renderArchieSettings
+};

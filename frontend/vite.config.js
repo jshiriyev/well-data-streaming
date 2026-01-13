@@ -21,13 +21,11 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       input: {
+        launcher: resolve(projectDir, "index.html"),
         onemap: resolve(pagesDir, "onemap/index.html"),
         timeseries: resolve(pagesDir, "timeseries/index.html"),
         archie: resolve(pagesDir, "archie/index.html"),
         workbench: resolve(pagesDir, "workbench/index.html"),
-        fluidlab: resolve(pagesDir, "fluidlab/index.html"),
-        deliverables: resolve(pagesDir, "deliverables/index.html"),
-        impulse: resolve(pagesDir, "impulse/index.html"),
         datahub: resolve(pagesDir, "datahub/index.html"),
       },
       output: {

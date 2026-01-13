@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display:none">
+  <symbol id="tile-onemap" viewBox="0 0 24 24">
+    <path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 6.4 12.6 6.7 12.9a.5.5 0 0 0 .7 0c.2-.3 6.6-7.7 6.6-12.9 0-3.9-3.1-7-7-7m0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5" />
+  </symbol>
+  <symbol id="tile-workbench" viewBox="0 0 24 24">
+    <path d="M4 5h16v4H4zm0 6h10v8H4zm12 0h4v8h-4z" />
+  </symbol>
+  <symbol id="tile-timeseries" viewBox="0 0 24 24">
+    <path d="M5 19a1 1 0 0 1-1-1V6a1 1 0 1 1 2 0v11h13a1 1 0 1 1 0 2zm3.8-8.2 3.4-2.4 2.2 1.4 3.1-3.9a1 1 0 1 1 1.6 1.2l-3.7 4.6a1 1 0 0 1-1.3.2l-2.2-1.4-1.8 1.8a1 1 0 1 1 0-1.4" />
+  </symbol>
+  <symbol id="tile-archie" viewBox="0 0 24 24">
+    <path d="M5 3v18H4V3Zm6 0v18h-1V3Zm6 0v18h-1V3Z" />
+  </symbol>
+  <symbol id="tile-fluidlab" viewBox="0 0 24 24">
+    <path d="M10 2a1 1 0 0 1 0 2v5.2L6.9 14a6 6 0 0 0 5.1 9h.1a6 6 0 0 0 5.1-9L14 9.2V4a1 1 0 1 1 0-2zm2 10.2c2.6 0 4.6 1.8 4.9 4.3.1.7-.5 1.3-1.2 1.3H8.3c-.7 0-1.3-.6-1.2-1.3.3-2.5 2.3-4.3 4.9-4.3" />
+  </symbol>
+  <symbol id="tile-deliverables" viewBox="0 0 24 24">
+    <path d="M4 21a1 1 0 0 1 0-2h2.3l3.1-15.2A2 2 0 0 1 11.4 2h1.2a2 2 0 0 1 2 1.8L17.7 19H20a1 1 0 1 1 0 2H4zm6.3-17L7.5 18h2.2l.4-2h3.8l.4 2h2.2L13.7 4a.3.3 0 0 0-.3-.2h-1.2a.3.3 0 0 0-.3.2zm.2 3.5h3l-.2 1H10.7l-.2-1zm-.6 3h4.2l-.2 1H10.1l-.2-1zm-.6 3h5.4l-.2 1H9.5l-.2-1zm.2 6h5l-.2-1H9.7l-.2 1z" />
+  </symbol>
+  <symbol id="tile-impulse" viewBox="0 0 24 24">
+    <path d="M13 2 4 14h6l-1 8 11-14h-6l1-6z" />
+  </symbol>
+</svg>

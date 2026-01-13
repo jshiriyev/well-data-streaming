@@ -15,7 +15,7 @@
     </header>
 
     <section class="links">
-      <a href="/src/pages/onemap/" class="onemap">
+      <a href="/onemap/" class="onemap" data-app="onemap">
         <div class="tile-top">
           <svg class="tile-icon" viewBox="0 0 24 24" aria-hidden="true">
             <path
@@ -39,7 +39,24 @@
         <small>Contours, wells, filters</small>
       </a>
 
-      <a href="/src/pages/timeseries/">
+      <a href="/workbench/" data-app="workbench">
+        <div class="tile-top">
+          <svg class="tile-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 5h16v4H4zm0 6h10v8H4zm12 0h4v8h-4z" />
+          </svg>
+          <span class="title">Workbench</span>
+        </div>
+        <div class="tile-map" aria-hidden="true">
+          <svg class="map-contours" viewBox="0 0 120 44" aria-hidden="true">
+            <rect x="6" y="6" width="108" height="32" rx="6" fill="none" stroke="currentColor" stroke-width="1.6"
+              opacity=".9" />
+            <path d="M20 16h80M20 22h56M20 28h70" fill="none" stroke="currentColor" stroke-width="2" />
+          </svg>
+        </div>
+        <small>Workspace Builder</small>
+      </a>
+
+      <a href="/timeseries/" data-app="timeseries">
         <div class="tile-top">
           <svg class="tile-icon" viewBox="0 0 24 24" aria-hidden="true">
             <path
@@ -63,7 +80,7 @@
         <small>Production Trends & Decline Analysis</small>
       </a>
 
-      <a href="/src/pages/archie/">
+      <a href="/archie/" data-app="archie">
         <div class="tile-top">
           <svg class="tile-icon" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M5 3v18H4V3Zm6 0v18h-1V3Zm6 0v18h-1V3Z" />
@@ -83,59 +100,7 @@
         </div>
         <small>Formation Evaluation</small>
       </a>
-
-      <a href="/src/pages/fluidlab/">
-        <div class="tile-top">
-          <svg class="tile-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              d="M10 2a1 1 0 0 1 0 2v5.2L6.9 14a6 6 0 0 0 5.1 9h.1a6 6 0 0 0 5.1-9L14 9.2V4a1 1 0 1 1 0-2zm2 10.2c2.6 0 4.6 1.8 4.9 4.3.1.7-.5 1.3-1.2 1.3H8.3c-.7 0-1.3-.6-1.2-1.3.3-2.5 2.3-4.3 4.9-4.3" />
-          </svg>
-          <span class="title">Fluid Lab</span>
-        </div>
-        <div class="tile-map" aria-hidden="true">
-          <svg class="map-contours" viewBox="0 0 120 44" aria-hidden="true">
-            <path d="M2 10 C18 4, 36 6, 54 12 S90 20, 118 10" />
-            <path d="M4 22 C22 16, 40 18, 60 24 S94 30, 116 22" />
-            <path d="M6 34 C26 28, 44 30, 66 36 S98 42, 114 34" />
-          </svg>
-        </div>
-        <small>Reservoir Fluid & PVT Analysis</small>
-      </a>
-
-      <a href="/src/pages/deliverables/">
-        <div class="tile-top">
-          <svg class="tile-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              d="M4 21a1 1 0 0 1 0-2h2.3l3.1-15.2A2 2 0 0 1 11.4 2h1.2a2 2 0 0 1 2 1.8L17.7 19H20a1 1 0 1 1 0 2H4zm6.3-17L7.5 18h2.2l.4-2h3.8l.4 2h2.2L13.7 4a.3.3 0 0 0-.3-.2h-1.2a.3.3 0 0 0-.3.2zm.2 3.5h3l-.2 1H10.7l-.2-1zm-.6 3h4.2l-.2 1H10.1l-.2-1zm-.6 3h5.4l-.2 1H9.5l-.2-1zm.2 6h5l-.2-1H9.7l-.2 1z" />
-          </svg>
-          <span class="title">Deliverables</span>
-        </div>
-        <div class="tile-map" aria-hidden="true">
-          <svg class="map-contours" viewBox="0 0 120 44" aria-hidden="true">
-            <path d="M2 10 C18 4, 36 6, 54 12 S90 20, 118 10" />
-            <path d="M4 22 C22 16, 40 18, 60 24 S94 30, 116 22" />
-            <path d="M6 34 C26 28, 44 30, 66 36 S98 42, 114 34" />
-          </svg>
-        </div>
-        <small>Well Performance Diagnostics</small>
-      </a>
-
-      <a href="/src/pages/impulse/">
-        <div class="tile-top">
-          <svg class="tile-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M13 2 4 14h6l-1 8 11-14h-6l1-6z" />
-          </svg>
-          <span class="title">Impulse</span>
-        </div>
-        <div class="tile-map" aria-hidden="true">
-          <svg class="map-contours" viewBox="0 0 120 44" aria-hidden="true">
-            <path d="M2 10 C18 4, 36 6, 54 12 S90 20, 118 10" />
-            <path d="M4 22 C22 16, 40 18, 60 24 S94 30, 116 22" />
-            <path d="M6 34 C26 28, 44 30, 66 36 S98 42, 114 34" />
-          </svg>
-        </div>
-        <small>Pressure Transient Analysis</small>
-      </a>
+      
     </section>
   </main>
   <script type="module" src="/src/main.js"></script>
