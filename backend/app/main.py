@@ -104,6 +104,7 @@ if FRONTEND_ENABLED:
 
     LAUNCHER_DIR = resolve_page_dir("launcher")
     ONEMAP_DIR = resolve_page_dir("onemap")
+    WORKBENCH_DIR = resolve_page_dir("workbench")
     TIMESERIES_DIR = resolve_page_dir("timeseries")
     ARCHIE_DIR = resolve_page_dir("archie")
     FLUIDLAB_DIR = resolve_page_dir("fluidlab")
@@ -113,13 +114,14 @@ if FRONTEND_ENABLED:
 
     STATIC_DIRS = {
         "launcher": LAUNCHER_DIR,
+        "datahub": DATAHUB_DIR,
         "onemap": ONEMAP_DIR,
+        "workbench": WORKBENCH_DIR,
         "timeseries": TIMESERIES_DIR,
         "archie": ARCHIE_DIR,
         "fluidlab": FLUIDLAB_DIR,
         "deliverables": DELIVERABLES_DIR,
         "impulse": IMPULSE_DIR,
-        "datahub": DATAHUB_DIR,
     }
 
     for path in STATIC_DIRS.values():
@@ -149,14 +151,15 @@ if FRONTEND_ENABLED:
         def api_config():
             return FileResponse(API_CONFIG_PATH)
 
+    app.mount("/datahub", StaticFiles(directory=DATAHUB_DIR, html=True), name="datahub")
     app.mount("/onemap", StaticFiles(directory=ONEMAP_DIR, html=True), name="onemap")
+    app.mount("/workbench", StaticFiles(directory=WORKBENCH_DIR, html=True), name="workbench")
     app.mount("/timeseries", StaticFiles(directory=TIMESERIES_DIR, html=True), name="timeseries")
     app.mount("/archie", StaticFiles(directory=ARCHIE_DIR, html=True), name="archie")
     app.mount("/fluidlab", StaticFiles(directory=FLUIDLAB_DIR, html=True), name="fluidlab")
     app.mount("/deliverables", StaticFiles(directory=DELIVERABLES_DIR, html=True), name="deliverables")
     app.mount("/impulse", StaticFiles(directory=IMPULSE_DIR, html=True), name="impulse")
-    app.mount("/datahub", StaticFiles(directory=DATAHUB_DIR, html=True), name="datahub")
-
+    
 app.include_router(wells.router, prefix="/api", tags=["wells"])
 app.include_router(rates.router, prefix="/api", tags=["rates"])
 

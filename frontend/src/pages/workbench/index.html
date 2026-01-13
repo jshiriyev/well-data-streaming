@@ -4,42 +4,50 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Log View</title>
+  <title>Workspace Builder</title>
   <link rel="stylesheet" href="https://unpkg.com/golden-layout@1.5.9/src/css/goldenlayout-base.css">
   <link rel="stylesheet" href="https://unpkg.com/golden-layout@1.5.9/src/css/goldenlayout-light-theme.css">
   <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
 </head>
 
-<body data-page="archie">
+<body data-page="workbench">
   <div class="app">
-
     <aside class="sidebar" id="control">
-      <h1>Data controls</h1>
+      <h1>Workspace Builder</h1>
+      <div class="settings-panel">
+        <div class="settings-heading">Workspace</div>
+        <label class="settings-field">
+          <span class="settings-label">Workspace type</span>
+          <select class="settings-input" id="workspaceType"></select>
+        </label>
+
+        <div class="settings-heading">Plot types</div>
+        <label class="settings-field">
+          <span class="settings-label">Panel plot</span>
+          <select class="settings-input" id="plotType"></select>
+        </label>
+        <div class="settings-actions">
+          <button class="settings-button" id="addPanelBtn" type="button">Add panel</button>
+        </div>
+        <p class="sidebar-note" id="workspaceStatus">Ready.</p>
+      </div>
     </aside>
-    
+
     <div class="vertical-resizer" id="controlResizer" aria-label="Resize control"></div>
 
     <main class="workspace">
-      <div id="archieLayoutRoot" class="archie-layout-root"></div>
+      <div class="golden-layout-root" id="goldenLayoutRoot" role="application" aria-label="Workspace"></div>
     </main>
 
     <div class="vertical-resizer" id="settingsResizer" aria-label="Resize settings"></div>
 
     <aside class="sidebar" id="settings">
-      <h1>Plot Settings</h1>
+      <h1>Panel Settings</h1>
       <div id="settingsContent">
-        <p class="sidebar-note">Loading settings...</p>
+        <p class="sidebar-note">Select a panel to view and edit its settings.</p>
       </div>
     </aside>
   </div>
-
-  <template id="archie-log-template">
-    <div class="log-suite">
-      <div data-role="log-head"></div>
-      <div class="log-divider" role="separator" aria-orientation="horizontal" data-role="log-divider"></div>
-      <div data-role="log-body"></div>
-    </div>
-  </template>
 
   <template id="trailSettingsTemplate">
     <div class="settings-panel">
