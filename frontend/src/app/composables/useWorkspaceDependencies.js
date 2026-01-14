@@ -1,7 +1,32 @@
 import { ref } from "vue";
-import { loadScriptOnce, loadStyleOnce } from "../utils/loaders.js";
 
 let loadPromise = null;
+
+async function ensureJquery() {
+  const module = await import("jquery");
+  const jquery = module.default ?? module;
+  if (typeof window !== "undefined") {
+    window.$ = jquery;
+    window.jQuery = jquery;
+  }
+  return jquery;
+}
+
+async function ensureGoldenLayout() {
+  const module = await import("golden-layout");
+  const GoldenLayout = module.default ?? module;
+  if (typeof window !== "undefined") {
+    window.GoldenLayout = GoldenLayout;
+  }
+  return GoldenLayout;
+}
+
+async function ensureGoldenLayoutStyles() {
+  await Promise.all([
+    import("golden-layout/src/css/goldenlayout-base.css"),
+    import("golden-layout/src/css/goldenlayout-light-theme.css"),
+  ]);
+}
 
 export function useWorkspaceDependencies() {
   const ready = ref(false);
@@ -15,16 +40,12 @@ export function useWorkspaceDependencies() {
     loading.value = true;
     error.value = null;
 
-    loadPromise = Promise.all([
-      loadStyleOnce("https://unpkg.com/golden-layout@1.5.9/src/css/goldenlayout-base.css"),
-      loadStyleOnce("https://unpkg.com/golden-layout@1.5.9/src/css/goldenlayout-light-theme.css"),
-      loadScriptOnce("https://code.jquery.com/jquery-3.7.1.min.js"),
-      loadScriptOnce("https://unpkg.com/golden-layout@1.5.9/dist/goldenlayout.min.js"),
-      loadScriptOnce("https://cdn.plot.ly/plotly-2.30.0.min.js"),
-    ])
-      .then(() => {
-        ready.value = true;
-      })
+    loadPromise = (async () => {
+      await ensureGoldenLayoutStyles();
+      await ensureJquery();
+      await ensureGoldenLayout();
+      ready.value = true;
+    })()
       .catch((err) => {
         error.value = err;
         throw err;

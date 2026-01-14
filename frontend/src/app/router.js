@@ -1,20 +1,19 @@
 import { createRouter, createWebHistory } from "vue-router";
-const WorkspacesView = () => import("./pages/WorkspacesView.vue");
-const NotFoundView = () => import("./pages/NotFoundView.vue");
+const DatahubView = () => import("./views/DatahubView.vue");
+const OnemapView = () => import("./views/OnemapView.vue");
+const WorkspaceView = () => import("./views/WorkspaceView.vue");
+const NotFoundView = () => import("./views/NotFoundView.vue");
 
 const routes = [
-  { path: "/", redirect: "/workspaces" },
-  { path: "/workspaces", component: WorkspacesView },
+  { path: "/", redirect: "/onemap" },
+  { path: "/datahub", component: DatahubView },
+  { path: "/onemap", component: OnemapView },
+  { path: "/workspace", component: WorkspaceView },
   { path: "/:pathMatch(.*)*", component: NotFoundView },
 ];
 
-const runtimeBase =
-  typeof window !== "undefined" && window.location.pathname.startsWith("/app/")
-    ? "/app/"
-    : import.meta.env.BASE_URL;
-
 const router = createRouter({
-  history: createWebHistory(runtimeBase),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes,
 });
 

@@ -1,20 +1,15 @@
 const globalScope = typeof window !== "undefined" ? window : globalThis;
+const envBaseUrl =
+  (import.meta.env?.VITE_API_BASE_URL ||
+    import.meta.env?.VITE_WELLX_API_BASE_URL ||
+    "") + "";
 
 function resolveApiBaseUrl() {
-  let globalValue = "";
-  if (globalScope && (globalScope.API_BASE_URL || globalScope.WELLX_API_BASE_URL)) {
-    globalValue = globalScope.API_BASE_URL || globalScope.WELLX_API_BASE_URL || "";
-  }
-
-  let metaValue = "";
-  if (typeof document !== "undefined") {
-    const meta = document.querySelector('meta[name="api-base-url"]');
-    if (meta) {
-      metaValue = meta.getAttribute("content") || "";
-    }
-  }
-
-  const raw = String(globalValue || metaValue || "").trim();
+  const runtimeValue =
+    (globalScope && globalScope.WELLX_API_BASE_URL) ||
+    (globalScope && globalScope.API_BASE_URL) ||
+    "";
+  const raw = String(runtimeValue || envBaseUrl || "").trim();
   return raw.replace(/\/+$/, "");
 }
 

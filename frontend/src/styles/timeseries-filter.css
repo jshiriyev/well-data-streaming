@@ -1,4 +1,4 @@
-.efs-col {
+.timeseries-panel .efs-col {
   border: 1px solid #e3e3e3;
   border-radius: 8px;
   padding: 8px 10px;
@@ -6,7 +6,7 @@
   background: #fff;
 }
 
-.efs-head {
+.timeseries-panel .efs-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -14,12 +14,12 @@
   margin-bottom: 6px;
 }
 
-.efs-title {
+.timeseries-panel .efs-title {
   font-weight: 600;
   font-size: 14px;
 }
 
-.efs-search {
+.timeseries-panel .efs-search {
   box-sizing: border-box;
   width: 100%;
   padding: 6px 8px;
@@ -28,7 +28,7 @@
   font-size: 12px;
 }
 
-.efs-list {
+.timeseries-panel .efs-list {
   margin-top: 6px;
   border: 1px solid #eee;
   border-radius: 6px;
@@ -36,7 +36,7 @@
   overflow: auto;
 }
 
-.efs-item {
+.timeseries-panel .efs-item {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -45,17 +45,17 @@
   font-size: 13px;
 }
 
-.efs-item:last-child {
+.timeseries-panel .efs-item:last-child {
   border-bottom: none;
 }
 
-.efs-count {
+.timeseries-panel .efs-count {
   color: #666;
   margin-left: auto;
   font-variant-numeric: tabular-nums;
 }
 
-.efs-btn {
+.timeseries-panel .efs-btn {
   padding: 6px 10px;
   border: 1px solid #ccc;
   border-radius: 6px;
@@ -63,18 +63,18 @@
   cursor: pointer;
 }
 
-.efs-btn:hover {
+.timeseries-panel .efs-btn:hover {
   background: #efefef;
 }
 
-.efs-range {
+.timeseries-panel .efs-range {
   display: flex;
   flex-direction: column;
   gap: 8px;
   padding-bottom: 20px;
 }
 
-.efs-range-values {
+.timeseries-panel .efs-range-values {
   display: flex;
   justify-content: space-between;
   font-variant-numeric: tabular-nums;
@@ -82,18 +82,18 @@
   color: #555;
 }
 
-.efs-range-inputs {
+.timeseries-panel .efs-range-inputs {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.efs-range-inputs input[type="range"] {
+.timeseries-panel .efs-range-inputs input[type="range"] {
   width: 100%;
   accent-color: #2c7be5;
 }
 
-.efs-range-slider{
+.timeseries-panel .efs-range-slider{
   top: 8px;
   height: 5px;
   border-radius: 5px;
@@ -101,7 +101,7 @@
   position: relative;
 }
 
-.efs-range-progress{
+.timeseries-panel .efs-range-progress{
   height: 5px;
   left: 0%;
   right: 0%;
@@ -110,7 +110,7 @@
   background: #0075ff;
 }
 
-.efs-include-null {
+.timeseries-panel .efs-include-null {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -120,17 +120,17 @@
   cursor: pointer;
 }
 
-.efs-include-null input[type="checkbox"] {
+.timeseries-panel .efs-include-null input[type="checkbox"] {
   width: 14px;
   height: 14px;
   accent-color: #2c7be5;
 }
 
-.efs-range-pointers{
+.timeseries-panel .efs-range-pointers{
   position: relative;
 }
 
-.efs-range-pointers input{
+.timeseries-panel .efs-range-pointers input{
   position: absolute;
   top: -5px;
   height: 5px;
@@ -142,11 +142,11 @@
   z-index: 1;
 }
 
-.efs-range-pointers input.is-top{
+.timeseries-panel .efs-range-pointers input.is-top{
   z-index: 2;
 }
 
-.filter-pill {
+.timeseries-panel .filter-pill {
   display: inline-flex;
   align-items: center;
   max-width: 100%;
@@ -156,7 +156,7 @@
   margin-bottom: 10px;
 }
 
-.filter-chip {
+.timeseries-panel .filter-chip {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -177,16 +177,16 @@
   box-shadow: 0 6px 14px rgba(14, 116, 144, 0.2);
 } */
 
-.filter-chip:active {
+.timeseries-panel .filter-chip:active {
   transform: translateY(1px);
 }
 
-.filter-chip-prefix {
+.timeseries-panel .filter-chip-prefix {
   color: #0f172a;
   white-space: nowrap;
 }
 
-.filter-chip-label {
+.timeseries-panel .filter-chip-label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -194,12 +194,12 @@
   max-width: 50ch;
 }
 
-.filter-chip-caret {
+.timeseries-panel .filter-chip-caret {
   font-size: 0.9rem;
   color: #0f172a;
 }
 
-.filter-dropdown {
+.timeseries-panel .filter-dropdown {
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
@@ -213,7 +213,7 @@
   max-width: min(520px, 90vw);
 }
 
-.filter-dropdown-content {
+.timeseries-panel .filter-dropdown-content {
   padding: 10px;
   display: flex;
   flex-direction: column;
@@ -222,7 +222,7 @@
   overflow-y: auto;
 }
 
-.filter-row {
+.timeseries-panel .filter-row {
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -232,19 +232,19 @@
   border: 1px solid #e0f2fe;
 }
 
-.filter-row-field {
+.timeseries-panel .filter-row-field {
   font-weight: 700;
   font-size: 0.95rem;
 }
 
-.filter-row-values {
+.timeseries-panel .filter-row-values {
   font-size: 0.9rem;
   color: #0f172a;
   white-space: normal;
   word-break: break-word;
 }
 
-.filter-empty {
+.timeseries-panel .filter-empty {
   padding: 6px 8px;
   border-radius: 8px;
   background: #f8fafc;

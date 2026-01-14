@@ -9,6 +9,12 @@ const PLOT_TYPES = [
     componentName: "archie-log",
     getState: () => ({ archie: {} }),
   },
+  {
+    id: "timeseries",
+    label: "Timeseries (Plotly)",
+    componentName: "timeseries-plot",
+    getState: () => ({ timeseries: {} }),
+  },
 ];
 
 export const useWorkspaceStore = defineStore("workspaces", {

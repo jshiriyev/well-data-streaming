@@ -1,16 +1,17 @@
 import { ref, shallowRef, unref, watch } from "vue";
 import { storeToRefs } from "pinia";
-import { createGoldenWorkspace } from "../../pages/workspaces/golden-workspace/createGoldenWorkspace.js";
-import { archieSettingsRegistry } from "../../pages/workspaces/plotly-configs/archie/archie.js";
-import { registerArchieComponents } from "../workspaces/registerArchieComponents.js";
-import { useWorkspaceStore } from "../stores/workspaces.js";
+import { createGoldenLayout } from "@components/workspace/golden-layout/createGoldenLayout.js";
+import { archieSettingsRegistry } from "@components/workspace/plotly-configs/archie/archie.js";
+import { registerWorkspaceComponents } from "@views/registerArchieComponents.js";
+import { useWorkspaceStore } from "@stores/workspaces.js";
+import { timeseriesSettingsRegistry } from "@components/workspace/plotly-configs/timeseries/timeseries.js";
 
 function resolveElement(value) {
   const resolved = unref(value);
   return resolved || null;
 }
 
-export function useGoldenWorkspace({
+export function useGoldenLayout({
   rootEl,
   controlResizer,
   settingsResizer,
@@ -78,7 +79,7 @@ export function useGoldenWorkspace({
 
     resetSettingsContent();
 
-    workspace.value = createGoldenWorkspace({
+    workspace.value = createGoldenLayout({
       rootEl: root,
       controlResizer: resolveElement(controlResizer),
       settingsResizer: resolveElement(settingsResizer),
@@ -99,9 +100,10 @@ export function useGoldenWorkspace({
           },
         ],
       }),
-      registerComponents: registerArchieComponents,
+      registerComponents: registerWorkspaceComponents,
       settingsRegistry: {
         ...archieSettingsRegistry,
+        ...timeseriesSettingsRegistry,
       },
       createPanelConfig,
     });
