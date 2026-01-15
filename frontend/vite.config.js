@@ -1,31 +1,27 @@
 import { defineConfig } from "vite";
-import vueDevTools from 'vite-plugin-vue-devtools'
 import vue from "@vitejs/plugin-vue";
+import tailwindcss from '@tailwindcss/vite'
 import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 
 const projectDir = dirname(fileURLToPath(import.meta.url));
+// const appEntry = resolve(projectDir, "index.html");
 const srcDir = resolve(projectDir, "src");
-const appRoot = resolve(srcDir, "app");
-const appEntry = resolve(srcDir, "index.html");
 
 export default defineConfig({
-  root: srcDir,
+  root: projectDir,
   base: "/",
   appType: "spa",
   plugins: [
-    vue()
+    vue(),
+    tailwindcss(),
   ],
   publicDir: resolve(projectDir, "public"),
   resolve: {
     alias: {
-      "@app": appRoot,
-      "@views": resolve(appRoot, "views"),
-      "@pages": resolve(appRoot, "pages"),
-      "@composables": resolve(appRoot, "composables"),
-      "@stores": resolve(appRoot, "stores"),
-      "@api": resolve(srcDir, "api"),
-      "@styles": resolve(srcDir, "styles"),
+      "@assets": resolve(srcDir, "assets"),
+      "@components": resolve(srcDir, "components"),
+      "@services": resolve(srcDir, "services"),
     },
   },
   server: {
@@ -37,7 +33,7 @@ export default defineConfig({
     outDir: resolve(projectDir, "dist"),
     emptyOutDir: true,
     rollupOptions: {
-      input: appEntry,
+      // input: appEntry,
       output: {
         entryFileNames: "assets/[name]-[hash].js",
         chunkFileNames: "assets/[name]-[hash].js",

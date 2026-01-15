@@ -1,0 +1,12 @@
+@import "tailwindcss";
+@import "tailwindcss-primeui";
+
+:root,
+body,
+#app {
+  min-height: 100vh;
+}
+
+body {
+  margin: 0;
+}

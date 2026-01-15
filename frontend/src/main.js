@@ -1,14 +1,29 @@
+import './assets/styles.css';
+import 'primeicons/primeicons.css';
+
 import { createApp } from "vue";
+import PrimeVue from "primevue/config";
+import Aura from '@primevue/themes/aura';
 import { createPinia } from "pinia";
-import App from "@app/App.vue";
-import router from "@app/router.js";
-import "@api/config.js";
-import "@styles/shared-vars.css";
-import "@styles/shared-base.css";
-import "@styles/shared-layout.css";
-import "@styles/shared-components.css";
+
+import App from "./App.vue";
+// import router from "@app/router.js";
+// import "@api/config.js";
 
 const app = createApp(App);
 app.use(createPinia());
-app.use(router);
+app.use(PrimeVue, {
+    theme: {
+        preset: Aura,
+        options: {
+            prefix: 'p',
+            darkModeSelector: 'system',
+            cssLayer: {
+                name: 'primevue',
+                order: 'theme, base, primevue'
+            }
+        }
+    },
+})
+// app.use(router);
 app.mount("#app");
