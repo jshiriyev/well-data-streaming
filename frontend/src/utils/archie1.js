@@ -1,5 +1,3 @@
-import "@styles/plotly-archie.css";
-
 const instances = new WeakMap();
 let settingsAutoOpened = false;
 

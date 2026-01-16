@@ -1,74 +1,42 @@
 <script setup>
-import { ref, computed, defineAsyncComponent } from "vue";
+import { ref } from "vue";
 
 import Button from "primevue/button";
 
-import WellTreeDrawer from "./components/WellTreeDrawer.vue"
+import WellTreeDrawer from "./components/WellTreeDrawer.vue";
+import PlotlyPanel from "./components/PlotlyPanel.vue";
 
-const view = ref(null); // "time" | "log" | null
-
-const TimePanel = defineAsyncComponent(() => import("./components/PlotlyTimePanel.vue"));
-const TimeDrawer = defineAsyncComponent(() => import("./components/PlotlyTimeDrawer.vue"));
-const LogPanel  = defineAsyncComponent(() => import("./components/PlotlyLogPanel.vue"));
-const LogDrawer = defineAsyncComponent(() => import("./components/PlotlyLogDrawer.vue"));
-
-const CurrentPanel = computed(() => {
-  if (view.value === "time") return TimePanel;
-  if (view.value === "log") return LogPanel;
-  return null;
-});
-
-const CurrentDrawer = computed(() => {
-  if (view.value === "time") return TimeDrawer;
-  if (view.value === "log") return LogDrawer;
-  return null;
-});
+// Each panel describes what it should display
+const openPanels = ref([]); // [{ id, title, nodeKey, viewType, props }]
 
 const visibleLeft = ref(false);
 const visibleRight = ref(false);
 
-const fig = ref({
-  data: [
-    { x: [1, 2, 3, 4], y: [10, 15, 13, 17], type: "scatter", mode: "lines+markers" },
-  ],
-  layout: { title: "Oil Rate" },
-  config: { scrollZoom: true },
-});
-
-const depth = Array.from({ length: 2000 }, (_, i) => i + 1000); // 1000..2999
-// Example curves
-const gr = depth.map((d) => 40 + 20 * Math.sin(d / 80));
-const res = depth.map((d) => 10 + 5 * Math.cos(d / 120));
-
-const tracks = ref([
-  {
-    id: "gr",
-    title: "GR (API)",
-    xRange: [0, 150],
-    scale: "linear",
-    curves: [{ name: "GR", x: gr, y: depth, unit: "API" }],
-  },
-  {
-    id: "res",
-    title: "Resistivity (ohm·m)",
-    xRange: [0.2, 200],
-    scale: "log",
-    curves: [{ name: "RT", x: res, y: depth, unit: "ohm·m" }],
-  },
-]);
-
-function onPointClick(info) {
-  console.log("Clicked:", info);
+function makePanelFromNode(node) {
+  // node should at least have: { key, label, type, payload }
+  // You decide mapping rules here.
+  return {
+    id: crypto.randomUUID(),
+    title: node.label,
+    nodeKey: node.key,
+    viewType: "logpanel", // e.g. "rates", "log", "meta"
+    props: {
+      // anything PlotPanel needs to fetch/plot
+      well: node.payload?.well,
+      // more…
+    },
+  };
 }
 
-function onRefresh() {
-  // Example: update data
-  fig.value = {
-    ...fig.value,
-    data: [
-      { x: [1, 2, 3, 4], y: [12, 14, 11, 19], type: "scatter", mode: "lines+markers" },
-    ],
-  };
+function onNodeSelect(node) {
+  const existing = openPanels.value.find((p) => p.nodeKey === node.key);
+  if (existing) return; // or "focus" it, or move it to top
+  openPanels.value.push(makePanelFromNode(node));
+  visibleLeft.value = false;
+}
+
+function closePanel(panelId) {
+  openPanels.value = openPanels.value.filter((p) => p.id !== panelId);
 }
 </script>
 
@@ -77,24 +45,27 @@ function onRefresh() {
     <Button class="drawer-button" icon="pi pi-arrow-right" @click="visibleLeft = true" />
   </div>
 
-  <WellTreeDrawer v-model:visible="visibleLeft" />
+  <WellTreeDrawer v-model:visible="visibleLeft" @node-select="onNodeSelect" />
 
-  <component v-if="CurrentPanel" :is="CurrentPanel" />
-  <!-- <TimePanel title="Well GW8-001" :figure="fig" :height="420" @refresh="onRefresh" /> -->
-  <LogPanel
-    title="GW8-001 Logs"
-    :tracks="tracks"
-    :depthRange="[1000, 3000]"
-    @track-click="onPointClick"
-  />
+  <main class="workspace">
+    <!-- <div v-if="openPanels.length === 0" class="empty">Click a node to open a panel.</div> -->
+    <div class="panel-grid">
+      <Suspense v-for="p in openPanels" :key="p.id">
+        <template #default>
+          <PlotlyPanel :panel="p" @close="closePanel(p.id)" />
+        </template>
+        <template #fallback>
+          <div class="panel-skeleton">Loading {{ p.title }}…</div>
+        </template>
+      </Suspense>
+    </div>
+  </main>
 
   <div class="edge-hover right">
     <Button class="drawer-button" icon="pi pi-arrow-left" @click="visibleRight = true" />
   </div>
 
-  <component v-if="CurrentDrawer" :is="CurrentDrawer" />
-  <!-- <TimeDrawer v-model:visible="visibleRight" /> -->
-  <LogDrawer v-model:visible="visibleRight" />
+  <!-- <PlotlyDrawer /> -->
 </template>
 
 <style scoped>
@@ -138,5 +109,31 @@ function onRefresh() {
 .draggable-panel > * {
   flex: 1 1 auto;
   min-height: 0; /* important for flex children */
+}
+
+.workspace {
+  padding: 12px 36px; /* leave room for edge hover zones */
+  min-height: 100vh;
+}
+
+.panel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(520px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.panel-skeleton {
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fff;
+  padding: 14px;
+  min-height: 240px;
+  opacity: 0.75;
+}
+
+.empty {
+  opacity: 0.7;
+  padding: 12px;
 }
 </style>

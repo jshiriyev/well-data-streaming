@@ -22,6 +22,8 @@ export default defineConfig({
       "@assets": resolve(srcDir, "assets"),
       "@components": resolve(srcDir, "components"),
       "@services": resolve(srcDir, "services"),
+      "@views": resolve(srcDir, "views"),
+      "@utils": resolve(srcDir, "utils"),
     },
   },
   server: {

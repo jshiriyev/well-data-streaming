@@ -1,6 +1,6 @@
 import { createSeriesPicker } from "./series.picker.js";
 import { createTraceStyler } from "./trace.styler.js";
-import { fetchRateData } from "@api/fetch.rates.js";
+import { fetchRateData } from "@services/fetch.rates.js";
 
 const DEFAULT_ANNOTATION = {
     text: "Select a series to display",

@@ -1,6 +1,10 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch, nextTick, computed } from "vue";
 
+import { fetchWellLog } from "@services/fetch.well.log.js";
+
+import { createArchiePanel } from "@utils/archie.js";
+
 import "vue-draggable-resizable/style.css";
 import VueDraggableResizable from "vue-draggable-resizable";
 import Card from "primevue/card";
@@ -9,30 +13,61 @@ import Menu from "primevue/menu";
 
 import Plotly from "plotly.js-dist-min";
 
-/**
- * Tracks model (example)
- * tracks = [
- *   {
- *     id: "gr",
- *     title: "GR",
- *     xRange: [0, 150],
- *     scale: "linear", // "linear" | "log"
- *     curves: [
- *       { name: "GR", x: [...], y: [...], unit: "API", side: "left" }
- *     ]
- *   },
- *   ...
- * ]
- */
 const props = defineProps({
   title: { type: String, default: "Well Log" },
-  height: { type: [Number, String], default: 520 },
-  depthRange: { type: Array, default: () => [null, null] }, // [top, base]
-  tracks: { type: Array, default: () => [] },
+
   showToolbar: { type: Boolean, default: true },
   // Optional: show a top "label axis" band (like Techlog) - kept simple here
   showHeaderBand: { type: Boolean, default: false },
+
+  height: { type: [Number, String], default: 520 },
+
+  depthRange: { type: Array, default: () => [null, null] }, // [top, base]
+  // depthTop: "",
+  // depthBase: "",
+  trailCount: {type: Number, default: 2 },
+  trailGap: { type: Number, default: 0.012 },
+  trails: { type: Object, default: [] } ,
+  grid: {
+    show: true,
+    width: 0.05,
+    color: "#20305f",
+    alpha: 0.55,
+    minor: {
+      show: false,
+      width: 0.03,
+      color: "#20305f",
+      alpha: 0.25,
+    },
+  },
+  separator: {
+    show: true,
+    width: 1,
+    color: "#20305f",
+    alpha: 0.9,
+  },
 });
+
+const data = await fetchWellLog(props.title);
+
+const tracks = ref([
+  {
+    id: "gr",
+    title: data.gr.mnemo,
+    xRange: [0, 150],
+    scale: "linear",
+    curves: [{ name: data.gr.mnemo, x: data.gr.value, y: data.DEPT, unit: data.gr.unit }],
+  },
+  {
+    id: "res",
+    title: data.res.mnemo,
+    xRange: [0, 2],
+    scale: "log",
+    curves: [
+      { name: data.res.mnemo, x: data.res.value, y: data.DEPT, unit: data.res.unit },
+    ],
+  },
+]);
 
 const emit = defineEmits(["refresh", "export", "close", "track-click"]);
 
@@ -55,48 +90,113 @@ function normalizedHeight() {
   return typeof props.height === "number" ? `${props.height}px` : props.height;
 }
 
+function clamp(n, min, max) {
+    return Math.max(min, Math.min(max, n));
+}
+
 function clampRange(a, b) {
   // Keep Plotly happy if user passes nulls
   if (a == null || b == null) return undefined;
   return [a, b];
 }
 
+function toNumber(value) {
+    if (value === "" || value == null) return null;
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+}
+
+function toRgba(hex, alpha) {
+    if (!hex || typeof hex !== "string") return `rgba(32, 48, 95, ${alpha ?? 0.6})`;
+    const raw = hex.replace("#", "").trim();
+    if (raw.length !== 6) return `rgba(32, 48, 95, ${alpha ?? 0.6})`;
+    const r = parseInt(raw.slice(0, 2), 16);
+    const g = parseInt(raw.slice(2, 4), 16);
+    const b = parseInt(raw.slice(4, 6), 16);
+    if (![r, g, b].every(Number.isFinite)) {
+        return `rgba(32, 48, 95, ${alpha ?? 0.6})`;
+    }
+    const a = Number.isFinite(alpha) ? alpha : 0.6;
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
+
+function normalizeTrails(trails, count) {
+    const target = Math.max(1, Number(count) || 1);
+    const next = [];
+    const existing = Array.isArray(trails) ? trails : [];
+
+    for (let i = 0; i < target; i += 1) {
+        const id = i + 1;
+        const prev = existing.find((t) => t.id === id) || existing[i] || {};
+        const curves = prev.curves instanceof Set
+            ? new Set(prev.curves)
+            : new Set(Array.isArray(prev.curves) ? prev.curves : []);
+        next.push({
+            id,
+            xMin: prev.xMin ?? "",
+            xMax: prev.xMax ?? "",
+            curves
+        });
+    }
+
+    return next;
+}
+
 function buildFigure() {
-  const tracks = props.tracks ?? [];
-  const n = Math.max(1, tracks.length);
+  const trackDefs = tracks.value ?? [];
+  const n = Math.max(1, props.trails.length);
+
+  // const trails =
+  //   Array.isArray(state.trails) && state.trails.length
+  //     ? state.trails
+  //     : normalizeTrails([], state.trailCount);
+  const gap = clamp(Number(props.trailGap) || 0, 0, 0.05);
 
   // Domain slices for x-axes (tracks)
-  const gap = 0.02;
+  // const gap = 0.02;
   const totalGap = gap * (n - 1);
   const w = (1 - totalGap) / n;
 
   const layout = {
     autosize: true,
-    margin: { l: 70, r: 20, t: 30, b: 35 },
+    margin: { l: 68, r: 24, t: 28, b: 44 },
     showlegend: false,
 
+    hovermode: "closest",
+    uirevision: "archie",
     // Depth axis (shared)
     yaxis: {
-      title: "Depth",
       autorange: "reversed", // depth downward
+      showgrid: true, // !!state.grid?.show,
       range: clampRange(props.depthRange?.[0], props.depthRange?.[1]),
+      // gridcolor: toRgba(state.grid?.color, state.grid?.alpha),
+      // gridwidth: Number(state.grid?.width) || 0.5,
       tickformat: ",.0f",
       ticks: "outside",
-      showgrid: true,
+
       zeroline: false,
+      shapes: [],
     },
 
     // Make panning/zooming feel "log-view-ish"
-    dragmode: "pan",
+    // dragmode: "pan",
 
     // Optional: background
     paper_bgcolor: "rgba(0,0,0,0)",
     plot_bgcolor: "rgba(0,0,0,0)",
   };
 
+  // if (state.grid?.minor?.show) {
+  //   layout.yaxis.minor = {
+  //       showgrid: true,
+  //       gridcolor: toRgba(state.grid.minor.color, state.grid.minor.alpha),
+  //       gridwidth: Number(state.grid.minor.width) || 0.25
+  //   };
+  // }
+
   const data = [];
 
-  tracks.forEach((trk, i) => {
+  trackDefs.forEach((trk, i) => {
     const xaxisName = i === 0 ? "xaxis" : `xaxis${i + 1}`;
     const xName = i === 0 ? "x" : `x${i + 1}`;
 
@@ -202,7 +302,8 @@ function resetView() {
 
   const update = { "yaxis.autorange": "reversed" };
   // Reset each x-axis too
-  const n = Math.max(1, (props.tracks ?? []).length);
+  const trackDefs = tracks.value ?? [];
+  const n = Math.max(1, trackDefs.length);
   for (let i = 1; i <= n; i++) {
     const ax = i === 1 ? "xaxis" : `xaxis${i}`;
     update[`${ax}.autorange`] = true;
@@ -214,10 +315,10 @@ function autoscaleXFromData(padFrac = 0.03) {
   if (!plotEl.value) return;
 
   // Compute per-track x extents from rendered data
-  const tracks = props.tracks ?? [];
   const updates = {};
+  const trackDefs = tracks.value ?? [];
 
-  tracks.forEach((trk, i) => {
+  trackDefs.forEach((trk, i) => {
     let xmin = +Infinity;
     let xmax = -Infinity;
 
@@ -274,7 +375,7 @@ onBeforeUnmount(() => {
 
 // Re-render when tracks/depthRange change
 watch(
-  () => [props.tracks, props.depthRange],
+  () => [tracks.value, props.depthRange],
   async () => {
     await nextTick();
     await render();
@@ -365,12 +466,12 @@ defineExpose({ render, resetView, autoscaleXFromData, downloadPng });
 
 .plot-card :deep(.p-card-content) {
   flex: 1;
-  min-height: 0; /* 🔥 REQUIRED for Plotly */
+  min-height: 0;
 }
 
 .plot-wrap {
   width: 100%;
-  height: 100%;
+  height: 100% !important;
   /* position: relative; */
 }
 
