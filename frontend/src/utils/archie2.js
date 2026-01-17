@@ -18,16 +18,6 @@ const DEFAULT_LOG_PLOT_SETTINGS = {
     }
 }
 
-function clamp(n, min, max) {
-    return Math.max(min, Math.min(max, n));
-}
-
-function toNumber(value) {
-    if (value === "" || value == null) return null;
-    const n = Number(value);
-    return Number.isFinite(n) ? n : null;
-}
-
 function buildLogFigure(state) {
 
     const traces = [];
@@ -35,7 +25,7 @@ function buildLogFigure(state) {
     const layout = {
         showlegend: false,
         dragmode: 'pan',
-        margin: { l: 68, r: 24, t: 28, b: 44 },
+        margin: { l: 68, r: 24, t: 28, b: 14 },
         hovermode: "closest",
         uirevision: "archie",
         yaxis: {
@@ -54,6 +44,16 @@ function buildLogFigure(state) {
         plot_bgcolor: "rgba(0,0,0,0)",
         paper_bgcolor: "rgba(0,0,0,0)",
     };
+
+    const clamp = ((n, min, max) => {
+        return Math.max(min, Math.min(max, n));
+    });
+
+    const toNumber = ((value) => {
+        if (value === "" || value == null) return null;
+        const n = Number(value);
+        return Number.isFinite(n) ? n : null;
+    });
 
     const depthRange = (() => {
         const top = toNumber(state.depth.top);
@@ -173,7 +173,7 @@ function addCut(mnemo, cutValue, fill = "right") {
     leftFillTrace.x = leftFillTrace.x.map(v => (v <= value ? v : null));
     leftFillTrace.fill = "tonextx"
     leftFillTrace.fillcolor = "rgba(0,150,255,0.35)",
-    leftFillTrace.showlegend = false
+        leftFillTrace.showlegend = false
 
     // const leftFillTrace = {
     //     x: fillx,
