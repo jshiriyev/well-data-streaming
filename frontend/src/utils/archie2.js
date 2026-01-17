@@ -18,6 +18,14 @@ const DEFAULT_LOG_PLOT_SETTINGS = {
     }
 }
 
+function createLogState(overrides = {}) {
+    const state = {
+        ...DEFAULT_LOG_PLOT_SETTINGS,
+        ...overrides,
+    };
+    return state;
+}
+
 function buildLogFigure(state) {
 
     const traces = [];
@@ -110,7 +118,6 @@ function buildLogFigure(state) {
             ticklen: 4,      // Shortens the physical tick marks
             tickfont: { size: 11 },
             automargin: true,
-            range: [0, 1],
             anchor: 'free',     // Anchors to the main x-axis
             position: 1,
         };
@@ -136,9 +143,78 @@ function buildLogFigure(state) {
     return { traces, layout, config };
 }
 
-function createLogPlot(plotHost) {
-    const state = {
-        ...DEFAULT_LOG_PLOT_SETTINGS,
+function createLogPlot(
+    plotHost,
+    logData,
+    logState = createLogState(),
+) {
+    const figure = buildLogFigure(logState);
+
+    function addTrace( index, mnemo ) {
+        const xKey = index === 0 ? "x" : `x${index + 1}`;
+        const xAxisKey = index === 0 ? "xaxis" : `xaxis${index + 1}`;
+
+        const trace = {
+            name: mnemo,
+            x: logData[mnemo],
+            y: logData['depth'],
+            mode: "lines",
+            line: { 
+                width: 1,
+                // color: undefined
+            },
+            showlegend: false,
+            xaxis: xKey,
+        };
+        figure.traces.push(trace)
+
+        figure.layout[xAxisKey].title.text = mnemo;
+
+        render();
+    }
+
+    function addTops() {
+        render();
+    }
+
+    function addPerfs() {
+        render()
+    }
+
+    function addCut(mnemo, cutValue, fill = "right") {
+
+        const cutTrace = {
+            name: "Cut Trace",
+            x: logData.NPHI,
+            y: logData.depth,
+            type: "scatter",
+            mode: "lines",
+            line: { color: "blue", width: 2 },
+            xaxis: "x3"
+        }
+        const trace = structuredClone(state.traces[2])
+        trace.x = Array(trace.y.length).fill(value)
+        trace.line.width = 0
+        trace.showlegend = false
+
+        const leftFillTrace = structuredClone(traces[2])
+        leftFillTrace.x = leftFillTrace.x.map(v => (v <= value ? v : null));
+        leftFillTrace.fill = "tonextx"
+        leftFillTrace.fillcolor = "rgba(0,150,255,0.35)",
+            leftFillTrace.showlegend = false
+
+        // const leftFillTrace = {
+        //     x: fillx,
+        //     y: trace.y,
+        //     mode: "lines",
+        //     line: { width: 0 },
+        //     fill: "tonextx",
+        //     fillcolor: "rgba(0,150,255,0.35)",
+        //     name: "Left Fill",
+        //     showlegend: false,
+        //     xaxis: "x3"
+        // };
+        return [leftFillTrace]
     }
 
     function render() {
@@ -146,47 +222,27 @@ function createLogPlot(plotHost) {
         if (!Plotly) {
             return
         }
-        const fig = buildLogFigure(state);
-        Plotly.react(plotHost, fig.traces, fig.layout, fig.config);
+        Plotly.react(
+            plotHost,
+            figure.traces,
+            figure.layout,
+            figure.config
+        );
     }
 
-    return { state, render }
-}
-
-function addCut(mnemo, cutValue, fill = "right") {
-
-    const cutTrace = {
-        name: "Cut Trace",
-        x: logData.NPHI,
-        y: logData.depth,
-        type: "scatter",
-        mode: "lines",
-        line: { color: "blue", width: 2 },
-        xaxis: "x3"
+    return {
+        figure,
+        addTrace,
+        addTops,
+        addPerfs,
+        addCut,
+        render,
     }
-    const trace = structuredClone(traces[2])
-    trace.x = Array(trace.y.length).fill(value)
-    trace.line.width = 0
-    trace.showlegend = false
-
-    const leftFillTrace = structuredClone(traces[2])
-    leftFillTrace.x = leftFillTrace.x.map(v => (v <= value ? v : null));
-    leftFillTrace.fill = "tonextx"
-    leftFillTrace.fillcolor = "rgba(0,150,255,0.35)",
-        leftFillTrace.showlegend = false
-
-    // const leftFillTrace = {
-    //     x: fillx,
-    //     y: trace.y,
-    //     mode: "lines",
-    //     line: { width: 0 },
-    //     fill: "tonextx",
-    //     fillcolor: "rgba(0,150,255,0.35)",
-    //     name: "Left Fill",
-    //     showlegend: false,
-    //     xaxis: "x3"
-    // };
-    return [leftFillTrace]
 }
 
-// traces.push(...addCut(0.22))
+const state = createLogState()
+state.trail.count = 2;
+state.trail.gap = 0.05;
+const a = createLogPlot('logView',logData,state)
+a.render()
+a.addTrace(1,'GR')
