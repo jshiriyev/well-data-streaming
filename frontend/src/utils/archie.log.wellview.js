@@ -1,7 +1,7 @@
 const DEFAULT_LOG_PLOT_SETTINGS = {
     trail: {
         count: 1,
-        gap: 0.,
+        gap: 0.01,
     },
     depth: {
         top: 1000.,
@@ -86,7 +86,7 @@ function buildLogFigure(state) {
 
     const gap = clamp(Number(state.trail.gap) || 0, 0, 0.05);
     const totalGap = gap * (state.trail.count - 1);
-    const width = (1 - totalGap) / state.trail.count;
+    const trailWidth = (1 - totalGap) / state.trail.count;
 
     for (let i = 0; i < state.trail.count; i++) {
         const xKey = i === 0 ? "x" : `x${i + 1}`;
@@ -101,8 +101,8 @@ function buildLogFigure(state) {
             yaxis: "y",
         });
 
-        const start = i * (width + gap);
-        const end = start + width;
+        const start = i * (trailWidth + gap);
+        const end = start + trailWidth;
 
         layout[xAxisKey] = {
             side: 'top',
@@ -125,11 +125,11 @@ function buildLogFigure(state) {
         if (!state.box.show) continue;
 
         // vertical separators: draw start only for i>0 to avoid duplicates at shared borders
-        if (i > 0) addShapeLine(start, start, 0, 1);
+        if (i > 0) addShapeLine(start, start, 0, 1, width=0.5);
         // right border always
-        addShapeLine(end, end, 0, 1);
+        addShapeLine(end, end, 0, 1, width=0.5);
         // bottom border
-        addShapeLine(start, end, 0, 0);
+        addShapeLine(start, end, 0, 0, width=0.5);
     };
 
     const config = {
@@ -148,9 +148,21 @@ function createLogPlot(
     logData,
     logState = createLogState(),
 ) {
-    const figure = buildLogFigure(logState);
+    let figure = buildLogFigure(logState);
 
-    function addTrace( index, mnemo ) {
+    function addTrail() {
+        logState.trail.count += 1;
+        figure = buildLogFigure(logState);
+        render()
+    }
+
+    function removeTrail() {
+        logState.trail.count -= 1;
+        figure = buildLogFigure(logState);
+        render()
+    }
+
+    function addTrace(index, mnemo) {
         const xKey = index === 0 ? "x" : `x${index + 1}`;
         const xAxisKey = index === 0 ? "xaxis" : `xaxis${index + 1}`;
 
@@ -159,18 +171,28 @@ function createLogPlot(
             x: logData[mnemo],
             y: logData['depth'],
             mode: "lines",
-            line: { 
+            line: {
                 width: 1,
                 // color: undefined
             },
             showlegend: false,
             xaxis: xKey,
         };
-        figure.traces.push(trace)
+
+        if (figure.traces[index].x.length === 0) {
+            figure.traces[index] = trace
+        } else {
+            // figure.layout[xAxisKey].overlaying = 'x'
+            figure.traces.push(trace)
+        }
 
         figure.layout[xAxisKey].title.text = mnemo;
 
         render();
+    }
+
+    function removeTrace(index, mnemo) {
+        render()
     }
 
     function addTops() {
@@ -200,8 +222,8 @@ function createLogPlot(
         const leftFillTrace = structuredClone(traces[2])
         leftFillTrace.x = leftFillTrace.x.map(v => (v <= value ? v : null));
         leftFillTrace.fill = "tonextx"
-        leftFillTrace.fillcolor = "rgba(0,150,255,0.35)",
-            leftFillTrace.showlegend = false
+        leftFillTrace.fillcolor = "rgba(0,150,255,0.35)"
+        leftFillTrace.showlegend = false
 
         // const leftFillTrace = {
         //     x: fillx,
@@ -232,7 +254,10 @@ function createLogPlot(
 
     return {
         figure,
+        addTrail,
+        removeTrail,
         addTrace,
+        removeTrace,
         addTops,
         addPerfs,
         addCut,
@@ -240,9 +265,7 @@ function createLogPlot(
     }
 }
 
-const state = createLogState()
-state.trail.count = 2;
-state.trail.gap = 0.05;
-const a = createLogPlot('logView',logData,state)
-a.render()
-a.addTrace(1,'GR')
+const a = createLogPlot('logView', logData,)
+// a.render()
+// a.addTrace(1, 'GR')
+// a.addTrace(1, 'NPHI')
