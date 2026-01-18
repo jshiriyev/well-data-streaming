@@ -1,7 +1,13 @@
 const DEFAULT_LOG_PLOT_SETTINGS = {
     trail: {
-        count: 1,
+        array: [{}],
+        get count() {
+            return this.array.length;
+        },
         gap: 0.01,
+    },
+    cycle: {
+        count: 1,
     },
     depth: {
         top: 1000.,
@@ -9,12 +15,15 @@ const DEFAULT_LOG_PLOT_SETTINGS = {
     },
     grid: {
         show: true,
+        color: "#20305f",
         minor: {
             show: false,
+            color: "#20305f",
         }
     },
     box: {
         show: true,
+        color: "#20305f",
     }
 }
 
@@ -125,11 +134,11 @@ function buildLogFigure(state) {
         if (!state.box.show) continue;
 
         // vertical separators: draw start only for i>0 to avoid duplicates at shared borders
-        if (i > 0) addShapeLine(start, start, 0, 1, width=0.5);
+        if (i > 0) addShapeLine(start, start, 0, 1, width = 0.5);
         // right border always
-        addShapeLine(end, end, 0, 1, width=0.5);
+        addShapeLine(end, end, 0, 1, width = 0.5);
         // bottom border
-        addShapeLine(start, end, 0, 0, width=0.5);
+        addShapeLine(start, end, 0, 0, width = 0.5);
     };
 
     const config = {
@@ -156,8 +165,9 @@ function createLogPlot(
         render()
     }
 
-    function removeTrail() {
+    function removeTrail(index) {
         logState.trail.count -= 1;
+        logState.trails.splice(index, 1);
         figure = buildLogFigure(logState);
         render()
     }
