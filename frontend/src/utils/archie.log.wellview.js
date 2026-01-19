@@ -1,22 +1,5 @@
-const DEFAULT_LOG_WELLVIEW_STATE = {
-    curves: [
-        {
-            mnemo: 'undefined',
-            trail: 0,
-            cycle: 0,
-            line: {
-                width: 1,
-            },
-        }
-    ],
-    get trails() {
-        if (!this.curves.length) return null;
-        return Math.max(...this.curves.map(curve => curve.trail ?? -Infinity)) + 1;
-    },
-    get cycles() {
-        if (!this.curves.length) return null;
-        return Math.max(...this.curves.map(curve => curve.cycle ?? -Infinity)) + 1;
-    },
+const LOG_WELLVIEW_STATE = {
+    curves: [],
     depth: {
         array: [],
         top: 1000.,
@@ -33,62 +16,125 @@ const DEFAULT_LOG_WELLVIEW_STATE = {
     box: {
         show: true,
         color: "#20305f",
-        gap: 0.01,
+        trailGap: 0.01,
+        cycleGap: 0.08,
     }
 }
 
 function createLogState(overrides = {}) {
-    const state = Object.create(DEFAULT_LOG_WELLVIEW_STATE);
+    const state = Object.create(LOG_WELLVIEW_STATE);
 
-    const baseCurves = overrides.curves ?? DEFAULT_LOG_WELLVIEW_STATE.curves;
+    const baseCurves = overrides.curves ?? LOG_WELLVIEW_STATE.curves;
     state.curves = baseCurves.map(curve => ({ ...curve }));
 
     state.depth = {
-        ...DEFAULT_LOG_WELLVIEW_STATE.depth,
+        ...LOG_WELLVIEW_STATE.depth,
         ...(overrides.depth ?? {}),
     };
 
     const gridOverride = overrides.grid ?? {};
     state.grid = {
-        ...DEFAULT_LOG_WELLVIEW_STATE.grid,
+        ...LOG_WELLVIEW_STATE.grid,
         ...gridOverride,
         minor: {
-            ...DEFAULT_LOG_WELLVIEW_STATE.grid.minor,
+            ...LOG_WELLVIEW_STATE.grid.minor,
             ...(gridOverride.minor ?? {}),
         },
     };
 
     state.box = {
-        ...DEFAULT_LOG_WELLVIEW_STATE.box,
+        ...LOG_WELLVIEW_STATE.box,
         ...(overrides.box ?? {}),
     };
 
-    const otherOverrides = { ...overrides };
-    delete otherOverrides.curves;
-    delete otherOverrides.depth;
-    delete otherOverrides.grid;
-    delete otherOverrides.box;
-    Object.assign(state, otherOverrides);
+    Object.defineProperties(state, {
+        trails: {
+            enumerable: false,
+            get() {
+                if (!Array.isArray(this.curves) || this.curves.length === 0) return 1;
+
+                let maxTrail = -Infinity;
+
+                for (const c of this.curves) {
+                    if (!Number.isFinite(c.trail)) continue;
+
+                    if (c.trail > maxTrail) {
+                        maxTrail = c.trail;
+                    }
+                }
+                if (maxTrail === -Infinity) maxTrail = 0;
+
+                return maxTrail + 1;
+            },
+        },
+        cycles: {
+            enumerable: false,
+            get() {
+                if (!Array.isArray(this.curves) || this.curves.length === 0) return 1;
+                const counts = new Map();
+                let max = 0;
+
+                for (const curve of this.curves) {
+                    if (!Number.isFinite(curve.trail)) continue;
+                    if (!Number.isFinite(curve.cycle)) continue;
+
+                    const next = (counts.get(curve.trail) ?? 0) + 1;
+                    counts.set(curve.trail, next);
+
+                    if (next > max) max = next;
+                }
+
+                return max;
+            },
+        },
+    });
 
     return state;
 }
 
-function buildLogFigure(state) {
+function getDepthRange(state) {
+    const toNumber = ((value) => {
+        if (value === "" || value == null) return null;
+        const n = Number(value);
+        return Number.isFinite(n) ? n : null;
+    });
 
-    function getFirstCurveOnTrail(trail) {
-        let best = null;
+    const top = toNumber(state.depth.top);
+    const base = toNumber(state.depth.base);
+    if (top == null || base == null) return null;
+    return [base, top];
+}
 
-        for (const curve of state.curves) {
-            if (curve.trail !== trail) continue;
-            if (!best || curve.cycle < best.cycle) {
-                best = curve;
-            }
+function getFirstCycleCurve(state, trail) {
+    let lowestCurve = null;
+
+    for (const curve of state.curves) {
+        if (curve.trail !== trail) continue;
+        if (!Number.isFinite(curve.cycle)) continue;
+
+        if (!lowestCurve || curve.cycle < lowestCurve.cycle) {
+            lowestCurve = curve;
         }
-        return best;
+    }
+    return lowestCurve;
+}
+
+function getFirstCurveByMnemo(state, mnemo) {
+    if (!Array.isArray(state.curves)) {
+        throw new TypeError("curves must be an array");
     }
 
-    const traces = [];
+    const curve = state.curves.find(c => c.mnemo === mnemo);
 
+    if (!curve) {
+        throw new Error(`No curve found with mnemo "${mnemo}"`);
+    }
+
+    return curve;
+}
+
+function buildLogFigure(state) {
+    const traces = [];
     const layout = {
         showlegend: false,
         dragmode: 'pan',
@@ -98,6 +144,7 @@ function buildLogFigure(state) {
         yaxis: {
             autorange: "reversed",
             zeroline: false,
+            domain: [0, 1 - (state.cycles - 1) * state.box.cycleGap],
             showline: !!state.box?.show,
             showgrid: !!state.grid?.show,
             minor: {
@@ -112,22 +159,95 @@ function buildLogFigure(state) {
         shapes: [],
     };
 
-    const toNumber = ((value) => {
-        if (value === "" || value == null) return null;
-        const n = Number(value);
-        return Number.isFinite(n) ? n : null;
-    });
-
-    const depthRange = (() => {
-        const top = toNumber(state.depth.top);
-        const base = toNumber(state.depth.base);
-        if (top == null || base == null) return null;
-        return [base, top];
-    })();
+    const depthRange = getDepthRange(state)
 
     if (depthRange) {
         layout.yaxis.range = depthRange;
     }
+
+    (() => {
+        const counters = new Map();
+        for (const curve of state.curves) {
+            if (Object.hasOwn(curve, "cycle")) continue;
+            const trail = curve.trail;
+            if (!Number.isFinite(trail)) continue;
+            const nextCycle = counters.get(trail) ?? 0;
+            curve.cycle = nextCycle;
+            counters.set(trail, nextCycle + 1);
+        }
+    })();
+
+    console.log(state.trails)
+    console.log(state.cycles)
+    console.log(state.curves)
+
+    const gap = Math.max(0, Number(state.box.trailGap) || 0);
+    const totalGap = gap * (state.trails - 1);
+    const trailWidth = (1 - totalGap) / state.trails;
+
+    for (let i = 0; i < Math.max(state.curves.length, 1); i += 1) {
+        const curve = state.curves.length === 0 ? {
+            mnemo: "",
+            trail: 0,
+            cycle: 0,
+            range: null,
+        } : state.curves[i];
+
+        if (!Object.hasOwn(curve, "xaxis")) {
+            curve.xaxis = i === 0 ? "xaxis" : `xaxis${i + 1}`;
+        }
+
+        const start = curve.trail * (trailWidth + gap);
+        const end = start + trailWidth;
+
+        layout[curve.xaxis] = {
+            side: 'top',
+            title: { standoff: 0, text: curve.mnemo },
+            zeroline: false,
+            domain: [start, end],
+            showline: !!state.box?.show,
+            showgrid: curve.cycle === 0 && !!state.grid?.show,
+            minor: {
+                showgrid: curve.cycle === 0 && !!state.grid?.minor?.show
+            },
+            ticks: "outside",
+            ticklen: 4,      // Shortens the physical tick marks
+            tickfont: { size: 11 },
+            automargin: true,
+            anchor: 'free',     // Anchors to the main x-axis
+            position: 1 - (state.cycles - 1 - curve.cycle) * state.box.cycleGap,
+            range: curve.range,
+        };
+    }
+
+    for (let i = 0; i < state.curves.length; i += 1) {
+        const curve = state.curves[i];
+        if (!Object.hasOwn(curve, "x")) {
+            curve.x = i === 0 ? "x" : `x${i + 1}`;
+        }
+        const firstCurve = getFirstCycleCurve(state, curve.trail);
+
+        const trace = {
+            x: curve.array,
+            y: state.depth.array,
+            hoverinfo: "skip",
+            showlegend: false,
+            line: { width: curve.line.width },
+            xaxis: curve.x,
+            yaxis: 'y',
+            overlaying: firstCurve.x,
+        }
+
+        if ("fill" in curve) {
+            trace.fill = curve.fill
+        }
+
+        if ("fillcolor" in curve) {
+            trace.fillcolor = curve.fillcolor
+        }
+
+        traces.push(trace);
+    };
 
     const addShapeLine = (x0, x1, y0, y1, width = 1) => {
         layout.shapes.push({
@@ -139,66 +259,17 @@ function buildLogFigure(state) {
         });
     };
 
-    const gap = Math.max(0, Number(state.box.gap) || 0);
-    const totalGap = gap * (state.trails - 1);
-    const trailWidth = (1 - totalGap) / state.trails;
-
-    for (let i = 0; i < state.curves.length; i += 1) {
-        const curve = state.curves[i];
-
-        curve.x = i === 0 ? "x" : `x${i + 1}`;
-        curve.xaxis = i === 0 ? "xaxis" : `xaxis${i + 1}`;
-
-        curve.xstart = curve.trail * (trailWidth + gap);
-        curve.xend = curve.xstart + trailWidth;
-
-        const firstCurve = getFirstCurveOnTrail(curve.trail);
-
-        const overlaying = curve.cycle > 0 ? firstCurve.x : 'free';
-
-        layout[curve.xaxis] = {
-            side: 'top',
-            title: { standoff: 0, text: curve.mnemo },
-            zeroline: false,
-            domain: [curve.xstart, curve.xend],
-            showline: !!state.box?.show,
-            showgrid: !!state.grid?.show,
-            minor: {
-                showgrid: !!state.grid?.minor?.show
-            },
-            ticks: "outside",
-            ticklen: 4,      // Shortens the physical tick marks
-            tickfont: { size: 11 },
-            automargin: true,
-            anchor: 'free',     // Anchors to the main x-axis
-            position: 1,
-        };
-
-        traces.push({
-            x: curve.array,
-            y: state.depth.array,
-            hoverinfo: "skip",
-            showlegend: false,
-            line: { width: curve.line.width },
-            xaxis: curve.x,
-            yaxis: 'y',
-            overlaying: overlaying,
-        });
-    };
-
-    for (let i = 0; i < state.trails; i += 1) {
-
-        const start = i * (trailWidth + gap);
-        const end = start + trailWidth;
-
-        if (!state.box.show) continue;
-
-        // vertical separators: draw start only for i>0 to avoid duplicates at shared borders
-        if (i > 0) addShapeLine(start, start, 0, 1, width = 0.5);
-        // right border always
-        addShapeLine(end, end, 0, 1, width = 0.5);
-        // bottom border
-        addShapeLine(start, end, 0, 0, width = 0.5);
+    if (state.box.show) {
+        for (let i = 0; i < state.trails; i += 1) {
+            const start = i * (trailWidth + gap);
+            const end = start + trailWidth;
+            // vertical separators: draw start only for i>0 to avoid duplicates at shared borders
+            if (i > 0) addShapeLine(start, start, 0, 1 - (state.cycles - 1) * state.box.cycleGap, width = 0.5);
+            // right border always
+            addShapeLine(end, end, 0, 1 - (state.cycles - 1) * state.box.cycleGap, width = 0.5);
+            // bottom border
+            addShapeLine(start, end, 0, 0, width = 0.5);
+        }
     }
 
     const config = {
@@ -213,58 +284,50 @@ function buildLogFigure(state) {
 }
 
 function createLogPlot(
-    plotHost,
-    logData,
+    root,
+    data = undefined,
     state = createLogState(),
 ) {
-    let figure = buildLogFigure(state);
+    state.depth.array = data.depth
 
-    function getLastCurveOnTrail(trail) {
-        let best = null;
-
-        for (const curve of state.curves) {
-            if (curve.trail !== trail) continue;
-            if (!best || curve.cycle > best.cycle) {
-                best = curve;
-            }
+    const getXData = ((mnemo) => {
+        if (!data || data[mnemo] === undefined) {
+            return [];
         }
-        return best;
+        return data[mnemo];
+    });
+
+    for (curve of state.curves) {
+        curve.array = getXData(curve.mnemo)
     }
 
-    function addTrace(mnemo, trail = undefined, cycle = undefined, overlay = false) {
+    render();
 
-        if (logData?.[mnemo] === undefined) {
-            x = [];
-            y = [];
-        } else {
-            x = logData[mnemo];
-            y = logData.depth;
+    function addCurve(
+        mnemo,
+        {
+            trail = null,
+            line = { width: 1 },
+            ...kwargs
+        } = {}
+    ) {
+        console.log("fnbdjkshbjd", trail)
+        if (trail == null) {
+            trail = state.trails;
         }
-
-        if ( trail === undefined ) {
-            trail = 0;
-        }
-
-        if ( cycle === undefined ) {
-            cycle = getLastCurveOnTrail(trail) + 1
-        }
-        console.log(state.trails)
+        console.log("fnbdjkshbjd", trail)
         state.curves.push({
-            mnemo: mnemo,
-            array: x,
-            trail: trail,
-            cycle: cycle,
-            line: {
-                width: 1,
-            },
-            overlaying: 'free',
-        })
-        console.log(state.trails)
-        state.depth.array = y;
+            mnemo,
+            array: getXData(mnemo),
+            trail,
+            line,
+            ...kwargs
+        });
         render();
     }
 
-    function removeTrace(index, mnemo) {
+    function removeCurve(mnemo) {
+        state.curves = state.curves.filter(curve => curve.mnemo !== mnemo);
         render()
     }
 
@@ -284,27 +347,61 @@ function createLogPlot(
         render();
     }
 
-    function addCut(mnemo, cutValue, fill = "right") {
+    function addCut(mnemo, value, fill = "right", fillcolor = "rgba(0,150,255,0.35)") {
 
-        const cutTrace = {
-            name: "Cut Trace",
-            x: logData.NPHI,
-            y: logData.depth,
-            type: "scatter",
-            mode: "lines",
-            line: { color: "blue", width: 2 },
-            xaxis: "x3"
-        }
-        const trace = structuredClone(state.traces[2])
-        trace.x = Array(trace.y.length).fill(value)
-        trace.line.width = 0
-        trace.showlegend = false
+        // const cutTrace = {
+        //     name: "Cut Trace",
+        //     x: data.NPHI,
+        //     y: data.depth,
+        //     type: "scatter",
+        //     mode: "lines",
+        //     line: { color: "blue", width: 2 },
+        //     xaxis: "x3"
+        // }
 
-        const leftFillTrace = structuredClone(traces[2])
-        leftFillTrace.x = leftFillTrace.x.map(v => (v <= value ? v : null));
-        leftFillTrace.fill = "tonextx"
-        leftFillTrace.fillcolor = "rgba(0,150,255,0.35)"
-        leftFillTrace.showlegend = false
+        const curve = getFirstCurveByMnemo(state, mnemo)
+        // curve.array.map(v => (v <= value ? null : v)),
+
+        // const x = Array(state.depth.array.length).fill(value)
+
+        state.curves.push({
+            mnemo: "Cut Value",
+            array: Array(state.depth.array.length).fill(value),
+            trail: curve.trail,
+            cycle: Infinity,
+            line: { width: 1 },
+            range: curve.range,
+            fill: "tonextx",
+            fillcolor: fillcolor,
+            x: "x",
+            xaxis: "x"
+        });
+
+        // const cutLine = structuredClone(firstCurve)
+
+        // cutLine.x = Array(state.depth.array.length).fill(value)
+        // cutLine.line.width = 0
+
+        // console.log(cutLine)
+
+        // state.curves.push(cutLine)
+
+        // const trace = structuredClone(curve)
+
+        // console.log(curve.x)
+
+        // const trace = {
+        //     mnemo: "Trace",
+        //     array: curve.array.map(v => (v <= value ? null : v)),
+        //     trail: curve.trail,
+        //     line: { width: 1 },
+        //     range: curve.range,
+        //     fill: "tonextx",
+        //     fillcolor: fillcolor,
+        //     showlegend: false,
+        // }
+
+        // state.curves.push(trace)
 
         // const leftFillTrace = {
         //     x: fillx,
@@ -317,7 +414,7 @@ function createLogPlot(
         //     showlegend: false,
         //     xaxis: "x3"
         // };
-        return [leftFillTrace]
+        render()
     }
 
     function removeCut() {
@@ -325,13 +422,16 @@ function createLogPlot(
     }
 
     function render() {
-        if (!plotHost) return;
+        if (!root) return;
         if (!Plotly) {
             return
         }
         figure = buildLogFigure(state);
+        // console.log(figure.traces);
+        // console.log(figure.layout);
+        // console.log(figure.config);
         Plotly.react(
-            plotHost,
+            root,
             figure.traces,
             figure.layout,
             figure.config
@@ -340,9 +440,8 @@ function createLogPlot(
 
     return {
         state,
-        figure,
-        addTrace,
-        removeTrace,
+        addCurve,
+        removeCurve,
         addTops,
         removeTops,
         addPerfs,
@@ -353,7 +452,24 @@ function createLogPlot(
     }
 }
 
-const a = createLogPlot('logView', logData,)
-a.render()
-// a.addTrace(1, 'GR')
-// a.addTrace(1, 'NPHI')
+const state = createLogState({
+    curves: [
+        {
+            mnemo: 'NPHI',
+            trail: 0,
+            line: {
+                width: 1,
+            },
+            range: [0, 0.6]
+        }
+    ],
+    box: {
+        trailGap: 0.03,
+        // cycleGap: 0.08,
+    }
+})
+
+const a = createLogPlot('logView', logData, state)
+a.addCurve('RHOB', { trail: 1, range: [1.95, 2.95] })
+// a.addCurve('GR', { trail: 0 })
+a.addCut('NPHI', 0.25)
