@@ -16,8 +16,33 @@ const LOG_WELLVIEW_STATE = {
         color: "#20305f",
         trailGap: 0.01,
         cycleGap: 0.08,
+        showspikes: false,
     }),
 }
+
+const PLOTLY_LAYOUT_THEME = {
+    colorway: [
+        "#1F77B4", // blue
+        "#FF7F0E", // orange
+        "#2CA02C", // green
+        "#D62728", // red
+        "#9467BD", // purple
+        "#8C564B", // brown
+        "#E377C2", // pink
+        "#7F7F7F", // gray
+        "#BCBD22", // olive
+        "#17BECF"  // cyan
+    ],
+};
+
+const escapeHtml = (s) =>
+    String(s).replace(/[&<>"']/g, (c) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+    }[c]));
 
 function createLogState(overrides = {}) {
     const state = Object.create(LOG_WELLVIEW_STATE);
@@ -96,7 +121,22 @@ function createLogState(overrides = {}) {
         }
     });
 
-    function getFirstCurveByTrail(trail) {
+    state.normalizeTrails = function() {
+        if (this.curves.length === 0) return;
+
+        this.curves.sort((a, b) => a.trail - b.trail);
+        const minTrail = this.curves[0].trail;
+        if (minTrail === 0) return; // already normalized
+
+        this.curves = this.curves.map(c => ({
+            ...c,
+            trail: c.trail - minTrail
+        }));
+        
+        return;
+    };
+
+    state.getFirstCurveByTrail = function(trail) {
         let lowestCurve = null;
 
         for (const curve of this.curves) {
@@ -107,21 +147,33 @@ function createLogState(overrides = {}) {
         return lowestCurve;
     }
 
-    function getFirstCurveByMnemo(mnemo) {
+    state.getFirstCurveByMnemo = function(mnemo) {
         if (!Array.isArray(this.curves)) return null;
         const curve = this.curves.find(c => c.mnemo === mnemo);
         return curve ?? null;
     }
 
-    state.getFirstCurveByTrail = getFirstCurveByTrail;
-    state.getFirstCurveByMnemo = getFirstCurveByMnemo;
-
     return state;
 }
 
 function createLogFigure(state) {
+
+    state.normalizeTrails();
+
+    (() => {
+        const counters = new Map();
+        for (const curve of state.curves) {
+            if (Object.hasOwn(curve, "cycle") && !Number.isFinite(curve.cycle)) continue;
+            const nextCycle = counters.get(curve.trail) ?? 0;
+            curve.cycle = nextCycle;
+            counters.set(curve.trail, nextCycle + 1);
+        }
+    })();
+
     const traces = [];
+
     const layout = {
+        ...PLOTLY_LAYOUT_THEME,
         showlegend: false,
         dragmode: 'pan',
         margin: { l: 68, r: 24, t: 28, b: 14 },
@@ -130,6 +182,13 @@ function createLogFigure(state) {
         yaxis: {
             autorange: "reversed",
             zeroline: false,
+
+            showspikes: state.box.showspikes,
+            spikemode: 'across',
+            spikecolor: '#000000', // Set color
+            spikethickness: 0.5,
+            spikedash: '-', // Set line style
+
             domain: [0, 1 - (state.cycles - 1) * state.box.cycleGap],
             showline: !!state.box?.show,
             showgrid: !!state.grid?.show,
@@ -138,7 +197,7 @@ function createLogFigure(state) {
             },
             ticks: "outside",
             ticklen: 4,
-            tickfont: { size: 11 }
+            tickfont: { size: 11 },
         },
         plot_bgcolor: "rgba(0,0,0,0)",
         paper_bgcolor: "rgba(0,0,0,0)",
@@ -148,17 +207,6 @@ function createLogFigure(state) {
     if (state.depthRange) {
         layout.yaxis.range = state.depthRange;
     }
-
-    (() => {
-        const counters = new Map();
-        for (const curve of state.curves) {
-            if (Object.hasOwn(curve, "cycle") && !Number.isFinite(curve.cycle)) continue;
-            if (!Number.isFinite(curve.trail)) continue;
-            const nextCycle = counters.get(curve.trail) ?? 0;
-            curve.cycle = nextCycle;
-            counters.set(curve.trail, nextCycle + 1);
-        }
-    })();
 
     const gap = Math.max(0, Number(state.box.trailGap) || 0);
     const totalGap = gap * (state.trails - 1);
@@ -172,16 +220,28 @@ function createLogFigure(state) {
             range: null,
         } : state.curves[i];
 
-        if (!Object.hasOwn(curve, "xaxis")) {
-            curve.xaxis = i === 0 ? "xaxis" : `xaxis${i + 1}`;
-        }
+        if (curve.cycle === Infinity) {
+            continue;
+        };
+
+        curve.xAxisKey = i === 0 ? "xaxis" : `xaxis${i + 1}`;
 
         const start = curve.trail * (trailWidth + gap);
         const end = start + trailWidth;
 
-        layout[curve.xaxis] = {
+        const mnemoline = "—".repeat(1);
+        const mnemocolor = PLOTLY_LAYOUT_THEME.colorway[i % PLOTLY_LAYOUT_THEME.colorway.length];
+
+        layout[curve.xAxisKey] = {
             side: 'top',
-            title: { standoff: 0, text: curve.mnemo },
+            title: {
+                standoff: 0,
+                text: [
+                    `<span style="color: ${mnemocolor};"><b>${mnemoline}</b></span>`,
+                    `&nbsp;${escapeHtml(curve.mnemo)}&nbsp;`,
+                    `<span style="color: ${mnemocolor};"><b>${mnemoline}</b></span>`
+                ].join(""),
+            },
             zeroline: false,
             domain: [start, end],
             showline: !!state.box?.show,
@@ -201,20 +261,21 @@ function createLogFigure(state) {
 
     for (let i = 0; i < state.curves.length; i += 1) {
         const curve = state.curves[i];
-        if (!Object.hasOwn(curve, "x")) {
-            curve.x = i === 0 ? "x" : `x${i + 1}`;
+        if (curve.cycle !== Infinity) {
+            curve.xKey = i === 0 ? "x" : `x${i + 1}`;
         }
-        const firstCurve = state.getFirstCurveByTrail(curve.trail);
 
         const trace = {
+            name: curve.mnemo,
             x: curve.array,
             y: state.depth.array,
-            hoverinfo: "skip",
+            // hoverinfo: "skip",
             showlegend: false,
-            line: { width: curve.line.width },
-            xaxis: curve.x,
+            line: {
+                width: curve.line.width
+            },
+            xaxis: curve.xKey,
             yaxis: 'y',
-            overlaying: firstCurve.x,
         }
 
         if ("fill" in curve) {
@@ -262,7 +323,8 @@ function createLogFigure(state) {
     return { traces, layout, config };
 }
 
-function createLogPlot(root, data = undefined, state = createLogState()) {
+function createLogPlot(root, data = undefined, stateOverrides = {}) {
+    const state = createLogState(stateOverrides);
     let latestFigure = null;   // <-- holds the last computed figure
 
     const getXData = ((mnemo) => {
@@ -273,7 +335,7 @@ function createLogPlot(root, data = undefined, state = createLogState()) {
     });
 
     (() => {
-        state.depth.array = data.depth
+        state.depth.array = Array.isArray(data?.depth) ? data.depth : [];
         for (const curve of state.curves) {
             curve.array = getXData(curve.mnemo)
         }
@@ -302,7 +364,15 @@ function createLogPlot(root, data = undefined, state = createLogState()) {
     }
 
     function removeCurve(mnemo) {
-        state.curves = state.curves.filter(curve => curve.mnemo !== mnemo);
+        const curve = state.getFirstCurveByMnemo(mnemo)
+        state.curves = state.curves.filter(c =>
+            !(
+                c.cycle === Infinity &&
+                c.xKey === curve.xKey &&
+                c.xAxisKey === curve.xAxisKey
+            )
+        );
+        state.curves = state.curves.filter(c => c.mnemo !== mnemo);
         render()
     }
 
@@ -330,8 +400,8 @@ function createLogPlot(root, data = undefined, state = createLogState()) {
             cycle: Infinity,
             line: { width: 0 },
             showlegend: false,
-            xaxis: curve.x,
-            x: curve.x,
+            xAxisKey: curve.xAxisKey,
+            xKey: curve.xKey,
         }
 
         state.curves.push({
@@ -361,8 +431,8 @@ function createLogPlot(root, data = undefined, state = createLogState()) {
         state.curves = state.curves.filter(c =>
             !(
                 c.cycle === Infinity &&
-                c.x === curve.x &&
-                c.xaxis === curve.x
+                c.xKey === curve.xKey &&
+                c.xAxisKey === curve.xAxisKey
             )
         );
         render();
@@ -373,7 +443,7 @@ function createLogPlot(root, data = undefined, state = createLogState()) {
         if (!Plotly) {
             return
         }
-        
+
         latestFigure = fig ? fig : createLogFigure(state);
 
         Plotly.react(
@@ -408,219 +478,37 @@ function createLogPlot(root, data = undefined, state = createLogState()) {
 function archieLogView(root, data = undefined, state = createLogState()) {
     const plot = createLogPlot(root, data, state)
 
-    const getPlotDiv = () => {
-        if (!root) return null;
-        if (typeof root === "string") {
-            if (typeof document === "undefined") return null;
-            return document.getElementById(root);
-        }
-        return root;
-    };
-
-    const normalizeAxisKey = (axisKey) => {
-        if (!axisKey) return null;
-        if (axisKey.startsWith("xaxis")) return axisKey;
-        if (axisKey === "x") return "xaxis";
-        if (axisKey.startsWith("x")) return `xaxis${axisKey.slice(1)}`;
-        return null;
-    };
-
-    const getTrailAxisGroups = () => {
-        const groups = new Map();
-        if (!Array.isArray(plot.state.curves)) return groups;
-        for (const curve of plot.state.curves) {
-            const axisKey = normalizeAxisKey(curve.xaxis ?? curve.x);
-            if (!axisKey) continue;
-            const trail = Number.isFinite(curve.trail) ? curve.trail : 0;
-            if (!groups.has(trail)) groups.set(trail, new Set());
-            groups.get(trail).add(axisKey);
-        }
-        return groups;
-    };
-
-    const readAxisRange = (plotDiv, axisKey) => {
-        const axis = plotDiv?._fullLayout?.[axisKey] || plotDiv?.layout?.[axisKey];
-        if (!axis || !Array.isArray(axis.range)) return null;
-        const min = Number(axis.range[0]);
-        const max = Number(axis.range[1]);
-        if (!Number.isFinite(min) || !Number.isFinite(max)) return null;
-        return [min, max];
-    };
-
-    const normalizeRange = (range) => {
-        if (!Array.isArray(range) || range.length < 2) return null;
-        const min = Number(range[0]);
-        const max = Number(range[1]);
-        if (!Number.isFinite(min) || !Number.isFinite(max)) return null;
-        return [min, max];
-    };
-
-    const snapshotRanges = (plotDiv, groups) => {
-        const next = new Map();
-        if (!plotDiv) return next;
-        for (const axes of groups.values()) {
-            for (const axisKey of axes) {
-                const range = readAxisRange(plotDiv, axisKey);
-                if (range) next.set(axisKey, range);
-            }
-        }
-        return next;
-    };
-
-    const parseRelayoutXChanges = (relayout) => {
-        const changes = new Map();
-        if (!relayout) return changes;
-        for (const [key, value] of Object.entries(relayout)) {
-            let match = key.match(/^xaxis(\d*)\.range$/);
-            if (match) {
-                const axisKey = match[1] ? `xaxis${match[1]}` : "xaxis";
-                changes.set(axisKey, { range: value });
-                continue;
-            }
-            match = key.match(/^xaxis(\d*)\.range\[(0|1)\]$/);
-            if (match) {
-                const axisKey = match[1] ? `xaxis${match[1]}` : "xaxis";
-                const idx = Number(match[2]);
-                const entry = changes.get(axisKey) || {};
-                const range = Array.isArray(entry.range) ? [...entry.range] : [null, null];
-                range[idx] = value;
-                entry.range = range;
-                changes.set(axisKey, entry);
-                continue;
-            }
-            match = key.match(/^xaxis(\d*)\.autorange$/);
-            if (match) {
-                const axisKey = match[1] ? `xaxis${match[1]}` : "xaxis";
-                const entry = changes.get(axisKey) || {};
-                entry.autorange = value;
-                changes.set(axisKey, entry);
-            }
-        }
-        return changes;
-    };
-
-    let overlaySyncHandler = null;
-    let overlaySyncing = false;
-    let overlayRanges = new Map();
-
     function fixeddepth(bool = true) {
-        fig = plot.getFigure()
+        const fig = plot.getFigure()
+        if (!fig) return;
         fig.layout.yaxis.fixedrange = bool;
-        plot.render(fig)
+        plot.render(fig);
     }
 
     function fixedrange(i, bool = true) {
-        xax = i === 0 ? "xaxis" : `xaxis${i + 1}`;
-        fig = plot.getFigure()
-        fig.layout[xax].fixedrange = bool;
-        plot.render(fig)
+        const xaxis = i === 0 ? "xaxis" : `xaxis${i + 1}`;
+        const fig = plot.getFigure()
+        if (!fig) return;
+        fig.layout[xaxis].fixedrange = bool;
+        plot.render(fig);
     }
 
-    function syncOverlayedXAxis(enable = true) {
-        const plotDiv = getPlotDiv();
-        if (!plotDiv || !Plotly) return;
-
-        if (overlaySyncHandler) {
-            plotDiv.removeListener?.("plotly_relayout", overlaySyncHandler);
-            plotDiv.off?.("plotly_relayout", overlaySyncHandler);
-            overlaySyncHandler = null;
-        }
-
-        if (!enable) return;
-
-        overlaySyncHandler = (relayout) => {
-            if (overlaySyncing) return;
-
-            const groups = getTrailAxisGroups();
-            const axisToGroup = new Map();
-            for (const axes of groups.values()) {
-                if (axes.size < 2) continue;
-                for (const axisKey of axes) {
-                    axisToGroup.set(axisKey, axes);
-                }
-            }
-
-            const changes = parseRelayoutXChanges(relayout);
-            if (changes.size === 0) return;
-
-            const updates = {};
-            let hasUpdates = false;
-
-            for (const [axisKey, change] of changes) {
-                const group = axisToGroup.get(axisKey);
-                if (!group) continue;
-
-                if (change.autorange) {
-                    for (const ax of group) {
-                        if (ax === axisKey) continue;
-                        updates[`${ax}.autorange`] = change.autorange;
-                        updates[`${ax}.range`] = null;
-                    }
-                    hasUpdates = true;
-                    continue;
-                }
-
-                const newRange = normalizeRange(change.range) || readAxisRange(plotDiv, axisKey);
-                if (!newRange) continue;
-
-                const prevRange = overlayRanges.get(axisKey) || newRange;
-                const span = prevRange[1] - prevRange[0];
-                if (!Number.isFinite(span) || span === 0) continue;
-
-                const u0 = (newRange[0] - prevRange[0]) / span;
-                const u1 = (newRange[1] - prevRange[0]) / span;
-
-                for (const ax of group) {
-                    if (ax === axisKey) continue;
-                    const prevAxRange = overlayRanges.get(ax) || readAxisRange(plotDiv, ax);
-                    if (!prevAxRange) continue;
-                    const axSpan = prevAxRange[1] - prevAxRange[0];
-                    if (!Number.isFinite(axSpan) || axSpan === 0) continue;
-
-                    const nextAxRange = [
-                        prevAxRange[0] + u0 * axSpan,
-                        prevAxRange[0] + u1 * axSpan,
-                    ];
-
-                    updates[`${ax}.range`] = nextAxRange;
-                    updates[`${ax}.autorange`] = false;
-                    overlayRanges.set(ax, nextAxRange);
-                    hasUpdates = true;
-                }
-
-                overlayRanges.set(axisKey, newRange);
-            }
-
-            if (!hasUpdates) {
-                overlayRanges = snapshotRanges(plotDiv, groups);
-                return;
-            }
-
-            overlaySyncing = true;
-            Plotly.relayout(plotDiv, updates)
-                .then(() => {
-                    overlayRanges = snapshotRanges(plotDiv, groups);
-                })
-                .catch(() => { })
-                .then(() => {
-                    overlaySyncing = false;
-                });
-        };
-
-        const groups = getTrailAxisGroups();
-        overlayRanges = snapshotRanges(plotDiv, groups);
-        plotDiv.on("plotly_relayout", overlaySyncHandler);
+    function showspikes(bool = true) {
+        const fig = plot.getFigure()
+        if (!fig) return;
+        fig.layout.yaxis.showspikes = bool;
+        plot.render(fig);
     }
 
     return {
         plot,
         fixeddepth,
         fixedrange,
-        syncOverlayedXAxis,
+        showspikes,
     };
 }
 
-const state = createLogState({
+const state = {
     curves: [
         {
             mnemo: 'NPHI',
@@ -632,12 +520,15 @@ const state = createLogState({
         }
     ],
     box: {
-        trailGap: 0.05,
-        // cycleGap: 0.08,
+        trailGap: 0.015,
+        cycleGap: 0.05,
     }
-})
+}
 
 const a = archieLogView('logView', logData, state)
 a.plot.addCurve('RHOB', { trail: 1, range: [1.95, 2.95] })
 a.plot.addCurve('GR', { trail: 0 })
 a.plot.addCut('NPHI', 0.23, left = false)
+
+a.plot.removeCut('NPHI')
+// a.plot.removeCurve('NPHI')

@@ -13,6 +13,8 @@ import Menu from "primevue/menu";
 
 import Plotly from "plotly.js-dist-min";
 
+// import 
+
 const props = defineProps({
   title: { type: String, default: "Well Log" },
 

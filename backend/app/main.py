@@ -13,19 +13,24 @@ from fastapi.staticfiles import StaticFiles
 
 import pandas as pd
 
-from .api import wells, rates
+from .api import wells, rates, logs
 
 DOTENV_PATH = Path(__file__).resolve().parents[1] / ".env"
 
 def _should_load_dotenv() -> bool:
     value = os.getenv("LOAD_DOTENV", "").strip().lower()
-    return value in {"1", "true", "yes", "on"}
+    if value in {"0", "false", "no", "off"}:
+        return False
+    if value in {"1", "true", "yes", "on"}:
+        return True
+    return not os.getenv("DATA_DIR")
 
-if _should_load_dotenv() and DOTENV_PATH.exists():
+if DOTENV_PATH.exists() and _should_load_dotenv():
     load_dotenv(DOTENV_PATH)
 
 WELLS_FILENAME = "wells.geojson"
 RATES_FILENAME = "rates.csv"
+LAS_FOLDERNAME = "las"
 
 def _validate_data_dir():
     data_dir_raw = os.getenv("DATA_DIR", "").strip()
@@ -72,10 +77,12 @@ async def lifespan(app: FastAPI):
 
     wells_path = data_dir / WELLS_FILENAME
     rates_path = data_dir / RATES_FILENAME
+    logs_path  = data_dir / LAS_FOLDERNAME
 
     app.state.data_dir = data_dir
     app.state.wells_path = wells_path
     app.state.rates_path = rates_path
+    app.state.logs_path = logs_path
 
     try:
         app.state.wells = load_wells(wells_path)
@@ -104,7 +111,7 @@ if FRONTEND_ENABLED:
 
     LAUNCHER_DIR = resolve_page_dir("launcher")
     ONEMAP_DIR = resolve_page_dir("onemap")
-    WORKBENCH_DIR = resolve_page_dir("workbench")
+    WORKSPACE_DIR = resolve_page_dir("workbench")
     TIMESERIES_DIR = resolve_page_dir("timeseries")
     ARCHIE_DIR = resolve_page_dir("archie")
     FLUIDLAB_DIR = resolve_page_dir("fluidlab")
@@ -116,7 +123,7 @@ if FRONTEND_ENABLED:
         "launcher": LAUNCHER_DIR,
         "datahub": DATAHUB_DIR,
         "onemap": ONEMAP_DIR,
-        "workbench": WORKBENCH_DIR,
+        "workbench": WORKSPACE_DIR,
         "timeseries": TIMESERIES_DIR,
         "archie": ARCHIE_DIR,
         "fluidlab": FLUIDLAB_DIR,
@@ -153,7 +160,7 @@ if FRONTEND_ENABLED:
 
     app.mount("/datahub", StaticFiles(directory=DATAHUB_DIR, html=True), name="datahub")
     app.mount("/onemap", StaticFiles(directory=ONEMAP_DIR, html=True), name="onemap")
-    app.mount("/workbench", StaticFiles(directory=WORKBENCH_DIR, html=True), name="workbench")
+    app.mount("/workspace", StaticFiles(directory=WORKSPACE_DIR, html=True), name="workspace")
     app.mount("/timeseries", StaticFiles(directory=TIMESERIES_DIR, html=True), name="timeseries")
     app.mount("/archie", StaticFiles(directory=ARCHIE_DIR, html=True), name="archie")
     app.mount("/fluidlab", StaticFiles(directory=FLUIDLAB_DIR, html=True), name="fluidlab")
@@ -162,6 +169,7 @@ if FRONTEND_ENABLED:
     
 app.include_router(wells.router, prefix="/api", tags=["wells"])
 app.include_router(rates.router, prefix="/api", tags=["rates"])
+app.include_router(logs.router, prefix="/api", tags=["logs"])
 
 @app.get("/health")
 def healthcheck(request: Request):
