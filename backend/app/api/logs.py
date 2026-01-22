@@ -104,14 +104,14 @@ def get_log(logs_dir: Path, well: str) -> dict[str, Any]:
     except Exception as exc:
         raise ValueError(f"Failed to load log file: {log_path}") from exc
 
-    payload = _serialize_log(log_obj)
-    if not isinstance(payload, dict):
-        payload = {"data": payload}
+    payload = log_obj.df().to_json()
+    # if not isinstance(payload, dict):
+    #     payload = {"data": payload}
 
-    payload.setdefault("metadata", None)
-    payload.setdefault("data", None)
-    payload["well"] = name
-    return payload
+    # payload.setdefault("metadata", None)
+    # payload.setdefault("data", None)
+    # payload["well"] = name
+    return json.loads(payload)
 
 @router.get("/logs", response_model=LogOut)
 def list_logs(

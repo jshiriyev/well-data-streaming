@@ -1,19 +1,14 @@
-from typing import Any, Optional
+from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 
-class LogOut(BaseModel):
-    well: str
-    metadata: Optional[dict[str, Any]] = None
-    data: Optional[dict[str, Any]] = None
-
-    class Config:
-        extra = "allow"
+class LogOut(RootModel[dict[str, Any]]):
+    pass
 
 
 class LogQuery(BaseModel):
     well: str = Field(
         ...,
-        description="Well name, e.g. 'GUN_0001' (case sensitive).",
+        description="Well name, e.g. 'GUN_001' (case sensitive).",
     )
