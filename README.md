@@ -4,6 +4,7 @@ WellX Webapp is a FastAPI backend that serves an API and a set of static
 frontend modules (DataCast, Archie, NodePy, Transient, PorMed).
 
 [![Watch Demo](assets/demo.gif)](https://github.com/jshiriyev/wellx-webapp/assets/demo.mp4)
+> Built with FastAPI (backend) + Vue + Leaflet for geospatial visualization
 
 ## Repo layout
 
