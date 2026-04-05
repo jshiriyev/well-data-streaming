@@ -1,7 +1,7 @@
 # WellX Webapp
 
 WellX Webapp is a FastAPI backend that serves an API and a set of static
-frontend modules (OneMap, Time-Series, Archie, and more).
+frontend modules (DataCast, Archie, NodePy, Transient, PorMed).
 
 ## Repo layout
 
